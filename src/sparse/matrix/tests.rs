@@ -391,3 +391,15 @@ fn test_norm_with_negative_entries() {
 
     assert_eq!(norm_r, expected_norm);
 }
+
+#[test]
+fn test_norm2() {
+    let matrix: SparseMatrix = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+
+    assert_eq!(matrix.norm(), 18.0);
+}
