@@ -153,10 +153,7 @@ where
     /// This method is useful for iterating over the elements of the sparse matrix
     /// in a column-major order.
     pub fn iter(&self) -> SparseColIter<T> {
-        SparseColIter::new(
-            0,
-            self,
-        )
+        SparseColIter::new(0, self)
     }
 
     /// Scales the Matrix by a constant factor
@@ -168,9 +165,25 @@ where
     }
 }
 
+impl<T> std::ops::Mul<T> for SparseMatrix<T>
+where
+    T: Copy + Default + PartialEq + PartialOrd + std::ops::Mul<Output = T>,
+{
+    type Output = SparseMatrix<T>;
+
+    /// Multiplies the matrix by a scalar value.
+    ///
+    /// Returns a new matrix where each element is multiplied by the scalar value `rhs`.
+    fn mul(self, rhs: T) -> SparseMatrix<T> {
+        let mut res = self.clone();
+        res.scale(rhs);
+        res
+    }
+}
+
 impl<T> PartialEq for SparseMatrix<T>
 where
-    T:PartialEq,
+    T: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.nrows == other.nrows

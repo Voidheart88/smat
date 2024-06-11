@@ -40,7 +40,13 @@ where
         &self.values
     }
 
-    pub fn new(nrows: usize, ncols: usize, p: Vec<usize>, i: Vec<usize>, values: Vec<T>) -> Triples<T> {
+    pub fn new(
+        nrows: usize,
+        ncols: usize,
+        p: Vec<usize>,
+        i: Vec<usize>,
+        values: Vec<T>,
+    ) -> Triples<T> {
         Triples {
             nrows,
             ncols,
@@ -112,7 +118,7 @@ where
 
 impl<T> Default for Triples<T>
 where
-    T: Default + Copy + AddAssign+ PartialEq + Sum,
+    T: Default + Copy + AddAssign + PartialEq + Sum,
 {
     fn default() -> Self {
         Self::new(0, 0, Vec::new(), Vec::new(), Vec::new())

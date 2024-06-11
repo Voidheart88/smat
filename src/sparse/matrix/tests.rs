@@ -159,3 +159,18 @@ fn test_from_triples() {
     assert_eq!(sparse.row_idx, expected_sparse.row_idx);
     assert_eq!(sparse.values, expected_sparse.values);
 }
+
+#[test]
+fn test_from_iter_identity() {
+    let matrix = SparseMatrix {
+        nrows: 3,
+        ncols: 3,
+        col_idx: vec![0, 2, 4, 5],
+        row_idx: vec![0, 2, 1, 2, 1],
+        values: vec![1.0, 3.0, 2.0, 4.0, 5.0],
+    };
+
+    let result_matrix: SparseMatrix<f64> = matrix.iter().collect();
+
+    assert_eq!(matrix, result_matrix);
+}

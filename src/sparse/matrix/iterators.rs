@@ -1,21 +1,13 @@
 use super::*;
 
-/// An iterator over the columns of a sparse matrix.
-///
-/// This iterator yields `Option<SparseRowIter>`, where each `SparseRowIter` iterates
-/// over the non-zero elements in the corresponding column. If a column has no
-/// non-zero elements, `None` is returned for that column.
 pub struct SparseColIter<'a, T> {
     idx: usize,
     iterable: &'a SparseMatrix<T>,
 }
 
-impl<'a,T> SparseColIter<'a,T> {
-    pub fn new(idx: usize,iterable: &'a SparseMatrix<T>) -> SparseColIter<'a,T> {
-        SparseColIter {
-            idx,
-            iterable,
-        }
+impl<'a, T> SparseColIter<'a, T> {
+    pub fn new(idx: usize, iterable: &'a SparseMatrix<T>) -> SparseColIter<'a, T> {
+        SparseColIter { idx, iterable }
     }
 }
 
@@ -44,10 +36,6 @@ where
     }
 }
 
-/// An iterator over the non-zero elements in a col of a sparse matrix.
-///
-/// This iterator yields `(usize, f64)` tuples, where the first element is the row index
-/// and the second element is the value of the non-zero element in that row.
 pub struct SparseRowIter<'a, T> {
     row_idx: std::slice::Iter<'a, usize>,
     values: std::slice::Iter<'a, T>,
@@ -68,6 +56,46 @@ where
             }
         } else {
             None
+        }
+    }
+}
+
+impl<'a, T> FromIterator<Option<SparseRowIter<'a, T>>> for SparseMatrix<T>
+where
+    T: Copy,
+{
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = Option<SparseRowIter<'a, T>>>,
+    {
+        let mut col_idx = Vec::new();
+        let mut row_idx = Vec::new();
+        let mut values = Vec::new();
+
+        let mut col_index = 0;
+
+        for row_iter in iter.into_iter().flatten() {
+            col_idx.push(col_index);
+
+            for (row, value) in row_iter {
+                row_idx.push(row);
+                values.push(value);
+            }
+
+            col_index = values.len();
+        }
+
+        col_idx.push(col_index);
+
+        let nrows = row_idx.iter().copied().max().map_or(0, |x| x + 1);
+        let ncols = col_idx.len() - 1;
+
+        SparseMatrix {
+            nrows,
+            ncols,
+            col_idx,
+            row_idx,
+            values,
         }
     }
 }
