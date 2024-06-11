@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn test_new_function() {
+fn test_new() {
     let m = 3;
     let n = 2;
     let p = vec![0, 1];
@@ -10,31 +10,31 @@ fn test_new_function() {
 
     let triples = Triples::new(m, n, p.clone(), i.clone(), x.clone());
 
-    assert_eq!(triples.rows(), m);
-    assert_eq!(triples.columns(), n);
+    assert_eq!(triples.nrows(), m);
+    assert_eq!(triples.ncols(), n);
     assert_eq!(triples.column_idx(), &p);
     assert_eq!(triples.row_idx(), &i);
     assert_eq!(triples.values(), &x);
 }
 
 #[test]
-fn test_append_function() {
+fn test_append() {
     let mut triples = Triples::default();
     triples.append(1, 0, 5.0);
 
-    assert_eq!(triples.rows(), 2);
-    assert_eq!(triples.columns(), 1);
+    assert_eq!(triples.nrows(), 2);
+    assert_eq!(triples.ncols(), 1);
     assert_eq!(triples.get(1, 0), Some(5.0));
 
     triples.append(0, 1, 3.0);
 
-    assert_eq!(triples.rows(), 2);
-    assert_eq!(triples.columns(), 2);
+    assert_eq!(triples.nrows(), 2);
+    assert_eq!(triples.ncols(), 2);
     assert_eq!(triples.get(0, 1), Some(3.0));
 }
 
 #[test]
-fn test_get_function() {
+fn test_get() {
     let m = 2;
     let n = 2;
     let p = vec![0, 1, 0];
@@ -49,7 +49,7 @@ fn test_get_function() {
 }
 
 #[test]
-fn test_get_all_function() {
+fn test_get_all() {
     let m = 2;
     let n = 2;
     let p = vec![0, 0, 1];
