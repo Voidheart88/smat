@@ -250,7 +250,7 @@ fn test_iter3() {
     assert_eq!(col1.next(), Some((1, 2.0)));
     assert_eq!(col1.next(), None);
 
-    let mut col2 = col_iter.next().unwrap();
+    let col2 = col_iter.next().unwrap();
     assert!(col2.is_none());
 
     let mut col3 = col_iter.next().unwrap().unwrap();

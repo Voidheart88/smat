@@ -176,16 +176,6 @@ pub struct DenseVectorIter<'a, T> {
     phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T> DenseVectorIter<'a, T> {
-    fn new(sparse_vector: &'a SparseVector<T>) -> Self {
-        DenseVectorIter {
-            idx: 0,
-            iterable: sparse_vector,
-            phantom: PhantomData,
-        }
-    }
-}
-
 impl<'a, T> Iterator for DenseVectorIter<'a, T>
 where
     T: Copy + Default,

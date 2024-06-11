@@ -5,8 +5,6 @@ use std::fmt;
 use super::*;
 use crate::triple::Triples;
 
-use std::iter::FromIterator;
-
 /// Matrix in compressed sparse column (CSC) format
 #[derive(Clone, Debug)]
 pub struct SparseMatrix {
@@ -646,23 +644,23 @@ pub(crate) fn mult(a: &SparseMatrix, b: &SparseMatrix) -> SparseMatrix {
     c
 }
 
-pub(crate) fn mult2(lhs: &SparseMatrix, rhs: &SparseMatrix) -> SparseMatrix {
-    let lhs_iter = lhs.iter();
-    let rhs_iter = rhs.iter();
-
-    let it = lhs_iter.zip(rhs_iter);
-
-    let res = it.for_each(|(lhs, rhs)| { //Iterate over the rows
-         //match (lhs,rhs) {
-         //    (None, None) => None,
-         //    (None, Some(rhs)) => todo!(),
-         //    (Some(lhs), None) => todo!(),
-         //    (Some(lhs), Some(rhs)) => todo!(),
-         //}
-    });
-
-    SparseMatrix::default()
-}
+//pub(crate) fn mult2(lhs: &SparseMatrix, rhs: &SparseMatrix) -> SparseMatrix {
+//    let lhs_iter = lhs.iter();
+//    let rhs_iter = rhs.iter();
+//
+//    let it = lhs_iter.zip(rhs_iter);
+//
+//    let res = it.for_each(|(lhs, rhs)| { //Iterate over the rows
+//         //match (lhs,rhs) {
+//         //    (None, None) => None,
+//         //    (None, Some(rhs)) => todo!(),
+//         //    (Some(lhs), None) => todo!(),
+//         //    (Some(lhs), Some(rhs)) => todo!(),
+//         //}
+//    });
+//
+//    SparseMatrix::default()
+//}
 
 /// An iterator over the columns of a sparse matrix.
 ///
@@ -688,9 +686,6 @@ impl<'a> Iterator for SparseColIter<'a> {
                 Some(None)
             } else {
                 Some(Some(SparseRowIter {
-                    col_idx: self.idx - 1,
-                    start: start as usize,
-                    end: end as usize,
                     row_idx: self.iterable.row_idx[start as usize..end as usize].iter(),
                     values: self.iterable.values[start as usize..end as usize].iter(),
                 }))
@@ -704,9 +699,6 @@ impl<'a> Iterator for SparseColIter<'a> {
 /// This iterator yields `(usize, f64)` tuples, where the first element is the row index
 /// and the second element is the value of the non-zero element in that row.
 pub struct SparseRowIter<'a> {
-    col_idx: usize,
-    start: usize,
-    end: usize,
     row_idx: std::slice::Iter<'a, usize>,
     values: std::slice::Iter<'a, f64>,
 }
