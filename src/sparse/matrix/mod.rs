@@ -170,7 +170,7 @@ where
 
 impl<T> PartialEq for SparseMatrix<T>
 where
-    T: Copy + Default + PartialEq + PartialOrd,
+    T:PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.nrows == other.nrows

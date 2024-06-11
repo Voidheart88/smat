@@ -21,7 +21,7 @@ impl<'a,T> SparseColIter<'a,T> {
 
 impl<'a, T> Iterator for SparseColIter<'a, T>
 where
-    T: Copy + Default + PartialEq + PartialOrd + std::ops::Mul<Output = T>,
+    T: Copy + Default + PartialOrd + std::ops::Mul<Output = T>,
 {
     type Item = Option<SparseRowIter<'a, T>>;
 
@@ -55,7 +55,7 @@ pub struct SparseRowIter<'a, T> {
 
 impl<'a, T> Iterator for SparseRowIter<'a, T>
 where
-    T: Copy + Default + PartialEq + PartialOrd + std::ops::Mul<Output = T>,
+    T: Copy,
 {
     type Item = (usize, T);
 
