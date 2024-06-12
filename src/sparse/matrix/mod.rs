@@ -6,11 +6,11 @@ pub use iterators::*;
 /// Matrix in compressed sparse column (CSC) format
 #[derive(Clone, Debug)]
 pub struct SparseMatrix<T> {
-    pub nrows: usize,
-    pub ncols: usize,
-    pub col_ptr: Vec<usize>,
-    pub row_idx: Vec<usize>,
-    pub values: Vec<T>,
+    nrows: usize,
+    ncols: usize,
+    col_ptr: Vec<usize>,
+    row_idx: Vec<usize>,
+    values: Vec<T>,
 }
 
 impl<T> SparseMatrix<T>
@@ -51,6 +51,11 @@ where
     #[inline]
     pub fn row_idx(&self) -> &Vec<usize> {
         &self.row_idx
+    }
+
+    #[inline]
+    pub fn row_idx_mut(&mut self) -> &mut Vec<usize> {
+        &mut self.row_idx
     }
 
     #[inline]
@@ -186,6 +191,184 @@ where
         let mut res = self.clone();
         res.scale(*rhs);
         res
+    }
+}
+
+impl<T> std::ops::Add<&SparseMatrix<T>> for &SparseMatrix<T>
+where
+    T: Copy + Default + PartialOrd + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+{
+    type Output = SparseMatrix<T>;
+
+    fn add(self, rhs: &SparseMatrix<T>) -> Self::Output {
+        let self_col_iter = SparseColIter::new(0, &self);
+        let rhs_col_iter = SparseColIter::new(0, &rhs);
+
+        let mut col_ptr = Vec::new();
+        let mut row_idx = Vec::new();
+        let mut values = Vec::new();
+        let mut col_index = 0;
+
+        for (self_col, rhs_col) in self_col_iter.zip(rhs_col_iter) {
+            match (self_col, rhs_col) {
+                (Some(mut self_iter), Some(mut rhs_iter)) => {
+                    let mut rows = Vec::new();
+                    let mut vals = Vec::new();
+
+                    let mut self_next = self_iter.next();
+                    let mut rhs_next = rhs_iter.next();
+
+                    while let (Some(self_val), Some(rhs_val)) = (self_next, rhs_next) {
+                        match self_val.0.cmp(&rhs_val.0) {
+                            std::cmp::Ordering::Less => {
+                                rows.push(self_val.0);
+                                vals.push(self_val.1);
+                                self_next = self_iter.next();
+                            }
+                            std::cmp::Ordering::Greater => {
+                                rows.push(rhs_val.0);
+                                vals.push(rhs_val.1);
+                                rhs_next = rhs_iter.next();
+                            }
+                            std::cmp::Ordering::Equal => {
+                                rows.push(self_val.0);
+                                vals.push(self_val.1 + rhs_val.1);
+                                self_next = self_iter.next();
+                                rhs_next = rhs_iter.next();
+                            }
+                        }
+                    }
+
+                    while let Some(self_val) = self_next {
+                        rows.push(self_val.0);
+                        vals.push(self_val.1);
+                        self_next = self_iter.next();
+                    }
+
+                    while let Some(rhs_val) = rhs_next {
+                        rows.push(rhs_val.0);
+                        vals.push(rhs_val.1);
+                        rhs_next = rhs_iter.next();
+                    }
+
+                    for (row, val) in rows.into_iter().zip(vals.into_iter()) {
+                        row_idx.push(row);
+                        values.push(val);
+                    }
+                }
+                (Some(mut self_iter), None) | (None, Some(mut self_iter)) => {
+                    while let Some(self_val) = self_iter.next() {
+                        row_idx.push(self_val.0);
+                        values.push(self_val.1);
+                    }
+                }
+                (None, None) => {}
+            }
+            col_ptr.push(col_index);
+            col_index = values.len();
+        }
+
+        col_ptr.push(col_index);
+
+        SparseMatrix {
+            nrows: self.nrows,
+            ncols: self.ncols,
+            col_ptr,
+            row_idx,
+            values,
+        }
+    }
+}
+
+impl<T> std::ops::Add<SparseMatrix<T>> for SparseMatrix<T>
+where
+    T: Copy + Default + PartialOrd + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+{
+    type Output = SparseMatrix<T>;
+
+    fn add(self, rhs: SparseMatrix<T>) -> Self::Output {
+        (&self) + (&rhs)
+    }
+}
+
+impl<T> std::ops::Add<&SparseMatrix<T>> for SparseMatrix<T>
+where
+    T: Copy + Default + PartialOrd + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+{
+    type Output = SparseMatrix<T>;
+
+    fn add(self, rhs: &SparseMatrix<T>) -> Self::Output {
+        &self + rhs
+    }
+}
+
+impl<T> std::ops::Add<SparseMatrix<T>> for &SparseMatrix<T>
+where
+    T: Copy + Default + PartialOrd + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+{
+    type Output = SparseMatrix<T>;
+
+    fn add(self, rhs: SparseMatrix<T>) -> Self::Output {
+        self + &rhs
+    }
+}
+
+impl<T> std::ops::Mul<&SparseMatrix<T>> for &SparseMatrix<T>
+where
+    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialOrd,
+{
+    type Output = SparseMatrix<T>;
+
+    fn mul(self, rhs: &SparseMatrix<T>) -> Self::Output {
+
+        // n = ncols
+        // m = nrows
+        // p = col_ptr
+        // i = row_idx
+        // x = val
+
+        let mut nz = 0;
+        let mut w = vec![0; self.nrows()];
+        let mut x = vec![0.0; self.nrows()];
+
+        for column in rhs.iter() {
+
+        }
+
+        todo!();
+    }
+}
+
+impl<T> std::ops::Mul<SparseMatrix<T>> for SparseMatrix<T>
+where
+    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialOrd,
+{
+    type Output = SparseMatrix<T>;
+
+    fn mul(self, rhs: SparseMatrix<T>) -> Self::Output {
+        &self * &rhs
+    }
+}
+
+impl<T> std::ops::Mul<&SparseMatrix<T>> for SparseMatrix<T>
+where
+    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialOrd,
+{
+    type Output = SparseMatrix<T>;
+
+    fn mul(self, rhs: &SparseMatrix<T>) -> Self::Output {
+        &self * rhs
+    }
+}
+
+impl<T> std::ops::Mul<SparseMatrix<T>> for &SparseMatrix<T>
+where
+    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialOrd,
+{
+    type Output = SparseMatrix<T>;
+
+    fn mul(self, rhs: SparseMatrix<T>) -> Self::Output {
+        self * &rhs
     }
 }
 

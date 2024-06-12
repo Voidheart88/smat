@@ -174,3 +174,99 @@ fn test_from_iter_identity() {
 
     assert_eq!(matrix, result_matrix);
 }
+
+#[test]
+fn test_add() {
+    let lhs: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+    let rhs: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+    let exp: SparseMatrix<f64> = vec![
+        vec![2.0, 4.0, 6.0],
+        vec![8.0, 10.0, 12.0],
+        vec![14.0, 16.0, 18.0],
+    ]
+    .into();
+
+    let res = lhs + rhs;
+
+    assert_eq!(res, exp)
+}
+
+#[test]
+fn test_add2() {
+    let lhs: SparseMatrix<f64> = vec![vec![1.0, 2.0], vec![4.0, 5.0], vec![7.0, 8.0]].into();
+    let rhs: SparseMatrix<f64> = vec![vec![1.0, 2.0], vec![4.0, 5.0], vec![7.0, 8.0]].into();
+    let exp: SparseMatrix<f64> = vec![vec![2.0, 4.0], vec![8.0, 10.0], vec![14.0, 16.0]].into();
+
+    let res = lhs + rhs;
+    assert_eq!(res, exp)
+}
+
+#[test]
+fn test_add3() {
+    let lhs: SparseMatrix<f64> = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]].into();
+    let rhs: SparseMatrix<f64> = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]].into();
+    let exp: SparseMatrix<f64> = vec![vec![2.0, 4.0, 6.0], vec![8.0, 10.0, 12.0]].into();
+
+    let res = lhs + rhs;
+    assert_eq!(res, exp)
+}
+
+#[test]
+fn test_mul() {
+    let lhs: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+    let rhs: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+    let exp: SparseMatrix<f64> = vec![
+        vec![30.0, 36.0, 42.0],
+        vec![66.0, 81.0, 96.0],
+        vec![102.0, 126.0, 150.0],
+    ]
+    .into();
+
+    let res = lhs * rhs;
+    assert_eq!(res, exp)
+}
+
+#[test]
+fn test_mul2() {
+    let lhs: SparseMatrix<f64> = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]].into();
+    let rhs: SparseMatrix<f64> = vec![vec![1.0, 2.0], vec![4.0, 5.0], vec![7.0, 8.0]].into();
+    let exp: SparseMatrix<f64> = vec![vec![30.0, 36.0], vec![66.0, 81.0]].into();
+
+    let res = lhs * rhs;
+    assert_eq!(res, exp)
+}
+
+#[test]
+fn test_mul3() {
+    let lhs: SparseMatrix<f64> = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]].into();
+    let rhs: SparseMatrix<f64> = vec![vec![1.0, 2.0], vec![4.0, 5.0], vec![7.0, 8.0]].into();
+    let exp: SparseMatrix<f64> = vec![
+        vec![9.0, 12.0, 15.0],
+        vec![24.0, 33.0, 42.0],
+        vec![39.0, 54.0, 69.0],
+    ]
+    .into();
+
+    let res = rhs * lhs;
+    assert_eq!(res, exp)
+}
