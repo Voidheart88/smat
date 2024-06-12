@@ -243,7 +243,9 @@ fn test_mul() {
     .into();
 
     let res = lhs * rhs;
-    assert_eq!(res, exp)
+    assert_eq!(res, exp);
+    assert_eq!(res.ncols(),3);
+    assert_eq!(res.nrows(),3);
 }
 
 #[test]
@@ -253,7 +255,9 @@ fn test_mul2() {
     let exp: SparseMatrix<f64> = vec![vec![30.0, 36.0], vec![66.0, 81.0]].into();
 
     let res = lhs * rhs;
-    assert_eq!(res, exp)
+    assert_eq!(res, exp);
+    assert_eq!(res.ncols(),2);
+    assert_eq!(res.nrows(),2);
 }
 
 #[test]
@@ -268,5 +272,7 @@ fn test_mul3() {
     .into();
 
     let res = rhs * lhs;
-    assert_eq!(res, exp)
+    assert_eq!(res, exp);
+    assert_eq!(res.ncols(),3);
+    assert_eq!(res.nrows(),3);
 }

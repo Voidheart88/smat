@@ -1,6 +1,6 @@
 mod iterators;
 
-use crate::triple::Triples;
+use crate::{sparse::utils::scatter, triple::Triples};
 pub use iterators::*;
 
 /// Matrix in compressed sparse column (CSC) format
@@ -44,8 +44,13 @@ where
     }
 
     #[inline]
-    pub fn column_ptr(&self) -> &Vec<usize> {
+    pub fn col_ptr(&self) -> &Vec<usize> {
         &self.col_ptr
+    }
+
+    #[inline]
+    pub fn col_ptr_mut(&mut self) -> &mut Vec<usize> {
+        &mut self.col_ptr
     }
 
     #[inline]
@@ -61,6 +66,11 @@ where
     #[inline]
     pub fn values(&self) -> &Vec<T> {
         &self.values
+    }
+
+    #[inline]
+    pub fn values_mut(&mut self) -> &mut Vec<T> {
+        &mut self.values
     }
 
     /// Create a new Sparse Matrix filled with Zeros
@@ -320,22 +330,45 @@ where
     type Output = SparseMatrix<T>;
 
     fn mul(self, rhs: &SparseMatrix<T>) -> Self::Output {
-
-        // n = ncols
-        // m = nrows
-        // p = col_ptr
-        // i = row_idx
-        // x = val
-
         let mut nz = 0;
         let mut w = vec![0; self.nrows()];
-        let mut x = vec![0.0; self.nrows()];
+        let mut x = vec![T::default(); self.nrows()];
 
-        for column in rhs.iter() {
+        let space = 2 * (self.col_ptr().last().copied().unwrap_or(0) + rhs.col_ptr().last().copied().unwrap_or(0)) + self.nrows();
 
+        let mut acc: SparseMatrix<T> = SparseMatrix::zeros(
+            self.nrows(),
+            rhs.ncols(),
+            space,
+        );
+
+        for j in 0..rhs.ncols() {
+            if nz + self.nrows() > acc.values().len() {
+                let nsz = 2 * acc.values().len() + self.nrows();
+                acc.row_idx_mut().resize(nsz, 0);
+                acc.values_mut().resize(nsz, T::default());
+            }
+            acc.col_ptr_mut()[j] = nz;
+            for p in rhs.col_ptr()[j]..rhs.col_ptr()[j + 1] {
+                nz = scatter(
+                    self,
+                    rhs.row_idx()[p],
+                    rhs.values()[p],
+                    &mut w[..],
+                    &mut x[..],
+                    j + 1,
+                    &mut acc,
+                    nz,
+                );
+            }
+            for p in acc.col_ptr()[j] as usize..nz {
+                acc.values_mut()[p] = x[acc.row_idx()[p]];
+            }
         }
+        acc.col_ptr_mut()[rhs.ncols()] = nz;
+        acc.quick_trim();
 
-        todo!();
+        acc
     }
 }
 
