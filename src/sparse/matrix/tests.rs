@@ -9,7 +9,7 @@ fn test_zeros_matrix() {
 
     assert_eq!(matrix.nrows(), m);
     assert_eq!(matrix.ncols(), n);
-    assert_eq!(matrix.col_idx, vec![0; n + 1]);
+    assert_eq!(matrix.col_ptr, vec![0; n + 1]);
     assert_eq!(matrix.row_idx, vec![0; nzmax]);
     assert_eq!(matrix.values, vec![0.0; nzmax]);
 }
@@ -21,7 +21,7 @@ fn test_eye_matrix() {
 
     assert_eq!(matrix.nrows(), n);
     assert_eq!(matrix.ncols(), n);
-    assert_eq!(matrix.col_idx, vec![0, 1, 2, 3, 4]);
+    assert_eq!(matrix.col_ptr, vec![0, 1, 2, 3, 4]);
     assert_eq!(matrix.row_idx, vec![0, 1, 2, 3]);
     assert_eq!(matrix.values, vec![1.0; n]);
 }
@@ -43,7 +43,7 @@ fn test_trim() {
     let mut sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 2, 4, 6],
+        col_ptr: vec![0, 2, 4, 6],
         row_idx: vec![0, 2, 1, 1, 2, 2],
         values: vec![1.0, 0.0, 2.0, 0.0, 5.0, 0.0],
     };
@@ -53,7 +53,7 @@ fn test_trim() {
     let expected_sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 1, 2, 3],
+        col_ptr: vec![0, 1, 2, 3],
         row_idx: vec![0, 1, 2],
         values: vec![1.0, 2.0, 5.0],
     };
@@ -66,7 +66,7 @@ fn test_quick_trim() {
     let mut sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 2, 3, 5],
+        col_ptr: vec![0, 2, 3, 5],
         row_idx: vec![0, 2, 1, 1, 2, 0, 0, 0, 0, 0],
         values: vec![1.0, 3.0, 2.0, 4.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     };
@@ -76,7 +76,7 @@ fn test_quick_trim() {
     let expected_sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 2, 3, 5],
+        col_ptr: vec![0, 2, 3, 5],
         row_idx: vec![0, 2, 1, 1, 2],
         values: vec![1.0, 3.0, 2.0, 4.0, 5.0],
     };
@@ -124,7 +124,7 @@ fn test_from_dense() {
     let expected_sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 1, 3, 4],
+        col_ptr: vec![0, 1, 3, 4],
         row_idx: vec![0, 1, 2, 2],
         values: vec![1.0, 2.0, 3.0, 4.0],
     };
@@ -147,7 +147,7 @@ fn test_from_triples() {
     let expected_sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 2, 3, 5],
+        col_ptr: vec![0, 2, 3, 5],
         row_idx: vec![0, 2, 1, 1, 2],
         values: vec![1.0, 3.0, 2.0, 4.0, 5.0],
     };
@@ -155,7 +155,7 @@ fn test_from_triples() {
     assert_eq!(sparse.nrows, expected_sparse.nrows);
     assert_eq!(sparse.ncols, expected_sparse.ncols);
 
-    assert_eq!(sparse.col_idx, expected_sparse.col_idx);
+    assert_eq!(sparse.col_ptr, expected_sparse.col_ptr);
     assert_eq!(sparse.row_idx, expected_sparse.row_idx);
     assert_eq!(sparse.values, expected_sparse.values);
 }
@@ -165,7 +165,7 @@ fn test_from_iter_identity() {
     let matrix = SparseMatrix {
         nrows: 3,
         ncols: 3,
-        col_idx: vec![0, 2, 4, 5],
+        col_ptr: vec![0, 2, 4, 5],
         row_idx: vec![0, 2, 1, 2, 1],
         values: vec![1.0, 3.0, 2.0, 4.0, 5.0],
     };

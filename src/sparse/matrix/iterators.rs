@@ -1,5 +1,8 @@
 use super::*;
 
+/// An Iterator over the colums yielding an Iterator over the rows
+/// This Iterator yields Some(None) for every empty column and Some(SparseRowIter)
+/// for every column with entrys
 pub struct SparseColIter<'a, T> {
     idx: usize,
     iterable: &'a SparseMatrix<T>,
@@ -21,8 +24,8 @@ where
         if self.idx >= self.iterable.ncols() {
             None
         } else {
-            let start = self.iterable.col_idx[self.idx];
-            let end = self.iterable.col_idx[self.idx + 1];
+            let start = self.iterable.col_ptr[self.idx];
+            let end = self.iterable.col_ptr[self.idx + 1];
             self.idx += 1;
             if start == end {
                 Some(None)
@@ -36,6 +39,7 @@ where
     }
 }
 
+/// An Iterator over the values in a column
 pub struct SparseRowIter<'a, T> {
     row_idx: std::slice::Iter<'a, usize>,
     values: std::slice::Iter<'a, T>,
@@ -60,6 +64,7 @@ where
     }
 }
 
+// FromIterator implementation to construct a Sparse Matrix from an SparseColIterator
 impl<'a, T> FromIterator<Option<SparseRowIter<'a, T>>> for SparseMatrix<T>
 where
     T: Copy,
@@ -93,7 +98,7 @@ where
         SparseMatrix {
             nrows,
             ncols,
-            col_idx,
+            col_ptr: col_idx,
             row_idx,
             values,
         }

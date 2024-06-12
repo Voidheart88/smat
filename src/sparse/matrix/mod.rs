@@ -8,7 +8,7 @@ pub use iterators::*;
 pub struct SparseMatrix<T> {
     pub nrows: usize,
     pub ncols: usize,
-    pub col_idx: Vec<usize>,
+    pub col_ptr: Vec<usize>,
     pub row_idx: Vec<usize>,
     pub values: Vec<T>,
 }
@@ -27,7 +27,7 @@ where
         SparseMatrix {
             nrows,
             ncols,
-            col_idx,
+            col_ptr: col_idx,
             row_idx,
             values,
         }
@@ -44,8 +44,8 @@ where
     }
 
     #[inline]
-    pub fn column_idx(&self) -> &Vec<usize> {
-        &self.col_idx
+    pub fn column_ptr(&self) -> &Vec<usize> {
+        &self.col_ptr
     }
 
     #[inline]
@@ -64,7 +64,7 @@ where
         SparseMatrix {
             nrows: m,
             ncols: n,
-            col_idx: vec![0; n + 1],
+            col_ptr: vec![0; n + 1],
             row_idx: vec![0; nzmax],
             values: vec![T::default(); nzmax],
         }
@@ -72,14 +72,14 @@ where
 
     /// Create a sparse eye matrix
     pub fn eye(val: T, n: usize) -> SparseMatrix<T> {
-        let col_idx = (0..=n).map(|i| i).collect();
+        let col_ptr = (0..=n).map(|i| i).collect();
         let row_idx = (0..n).collect();
         let values = vec![val; n];
 
         SparseMatrix {
             nrows: n,
             ncols: n,
-            col_idx,
+            col_ptr,
             row_idx,
             values,
         }
@@ -87,9 +87,9 @@ where
 
     /// Get a Value
     pub fn get(&self, row: usize, column: usize) -> Option<T> {
-        self.col_idx
+        self.col_ptr
             .iter()
-            .zip(self.col_idx.iter().skip(1))
+            .zip(self.col_ptr.iter().skip(1))
             .enumerate()
             .flat_map(|(j, (&start, &end))| (start..end).map(move |i| (i, j)))
             .find(|&(i, j)| self.row_idx[i] == row && j == column)
@@ -118,13 +118,13 @@ where
             self.row_idx.remove(index);
         }
 
-        for j in (0..self.col_idx.len()).rev() {
+        for j in (0..self.col_ptr.len()).rev() {
             let num_removed = zero_indices
                 .iter()
-                .filter(|&&index| index < self.col_idx[j] as usize)
+                .filter(|&&index| index < self.col_ptr[j] as usize)
                 .count();
             if num_removed > 0 {
-                self.col_idx[j] -= num_removed;
+                self.col_ptr[j] -= num_removed;
             }
         }
     }
@@ -135,7 +135,7 @@ where
     /// of non-zero elements (`nzmax`). This is a faster but less precise method than `trim`,
     /// which completely removes zero elements.
     pub fn quick_trim(&mut self) {
-        let nzmax = self.col_idx[self.ncols] as usize;
+        let nzmax = self.col_ptr[self.ncols] as usize;
         self.row_idx.resize(nzmax, 0);
         self.values.resize(nzmax, T::default());
     }
@@ -170,13 +170,21 @@ where
     T: Copy + Default + PartialEq + PartialOrd + std::ops::Mul<Output = T>,
 {
     type Output = SparseMatrix<T>;
-
-    /// Multiplies the matrix by a scalar value.
-    ///
-    /// Returns a new matrix where each element is multiplied by the scalar value `rhs`.
     fn mul(self, rhs: T) -> SparseMatrix<T> {
         let mut res = self.clone();
         res.scale(rhs);
+        res
+    }
+}
+
+impl<T> std::ops::Mul<&T> for SparseMatrix<T>
+where
+    T: Copy + Default + PartialEq + PartialOrd + std::ops::Mul<Output = T>,
+{
+    type Output = SparseMatrix<T>;
+    fn mul(self, rhs: &T) -> SparseMatrix<T> {
+        let mut res = self.clone();
+        res.scale(*rhs);
         res
     }
 }
@@ -188,7 +196,7 @@ where
     fn eq(&self, other: &Self) -> bool {
         self.nrows == other.nrows
             && self.ncols == other.ncols
-            && self.col_idx == other.col_idx
+            && self.col_ptr == other.col_ptr
             && self.row_idx == other.row_idx
             && self.values == other.values
     }
@@ -203,7 +211,7 @@ where
             return SparseMatrix {
                 nrows: 0,
                 ncols: 0,
-                col_idx: vec![0],
+                col_ptr: vec![0],
                 row_idx: vec![],
                 values: vec![],
             };
@@ -228,7 +236,7 @@ where
         SparseMatrix {
             nrows,
             ncols,
-            col_idx,
+            col_ptr: col_idx,
             row_idx,
             values,
         }
@@ -266,7 +274,7 @@ impl From<&Triples<f64>> for SparseMatrix<f64> {
         SparseMatrix {
             nrows: triples.nrows(),
             ncols: triples.ncols(),
-            col_idx,
+            col_ptr: col_idx,
             row_idx,
             values,
         }
