@@ -13,7 +13,7 @@ pub(crate) fn scatter<T>(
     nz: usize,
 ) -> usize
 where
-    T: Copy + Default + Mul<Output = T> + PartialEq + PartialOrd + std::ops::AddAssign,
+    T: Copy + Default + Mul<Output = T> + PartialEq + std::ops::AddAssign,
 {
     let mut i;
     let mut nzo = nz;

@@ -1,104 +1,78 @@
 use super::*;
 
-/// An Iterator over the colums yielding an Iterator over the rows
-/// This Iterator yields Some(None) for every empty column and Some(SparseRowIter)
-/// for every column with entrys
-pub struct SparseColIter<'a, T> {
-    idx: usize,
-    iterable: &'a SparseMatrix<T>,
+/// An Iterator over the values in a Sparse Matrix
+pub struct SparseIter<'a, T> {
+    matrix: &'a SparseMatrix<T>,
+    current_col: usize,
+    current_pos: usize,
 }
 
-impl<'a, T> SparseColIter<'a, T> {
-    pub fn new(idx: usize, iterable: &'a SparseMatrix<T>) -> SparseColIter<'a, T> {
-        SparseColIter { idx, iterable }
+impl<'a, T> SparseIter<'a, T> {
+    pub fn new(matrix: &'a SparseMatrix<T>) -> Self {
+        SparseIter {
+            matrix,
+            current_col: 0,
+            current_pos: 0,
+        }
     }
 }
 
-impl<'a, T> Iterator for SparseColIter<'a, T>
+impl<'a, T> Iterator for SparseIter<'a, T>
 where
-    T: Copy + Default + PartialOrd + std::ops::Mul<Output = T>,
+    T: Copy + Default,
 {
-    type Item = Option<SparseRowIter<'a, T>>;
+    type Item = (usize, usize, T); // (col, row, value)
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.idx >= self.iterable.ncols() {
-            None
-        } else {
-            let start = self.iterable.col_ptr[self.idx];
-            let end = self.iterable.col_ptr[self.idx + 1];
-            self.idx += 1;
-            if start == end {
-                Some(None)
-            } else {
-                Some(Some(SparseRowIter {
-                    row_idx: self.iterable.row_idx[start..end].iter(),
-                    values: self.iterable.values[start..end].iter(),
-                }))
+        while self.current_col < self.matrix.ncols {
+            let col_end = self.matrix.col_ptr[self.current_col + 1];
+
+            if self.current_pos < col_end {
+                let row = self.matrix.row_idx[self.current_pos];
+                let value = self.matrix.values[self.current_pos];
+                let result = (self.current_col, row, value);
+                self.current_pos += 1;
+                return Some(result);
             }
+
+            self.current_col += 1;
+            self.current_pos = self.matrix.col_ptr[self.current_col];
         }
+
+        None
     }
 }
 
-/// An Iterator over the values in a column
-pub struct SparseRowIter<'a, T> {
-    row_idx: std::slice::Iter<'a, usize>,
-    values: std::slice::Iter<'a, T>,
-}
-
-impl<'a, T> Iterator for SparseRowIter<'a, T>
+impl<T> FromIterator<(usize, usize, T)> for SparseMatrix<T>
 where
-    T: Copy,
+    T: Copy + Default,
 {
-    type Item = (usize, T);
+    fn from_iter<I: IntoIterator<Item = (usize, usize, T)>>(iter: I) -> Self {
+        let mut elements: Vec<(usize, usize, T)> = iter.into_iter().collect();
+        elements.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1))); // Sort by (col, row)
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(&row) = self.row_idx.next() {
-            if let Some(&value) = self.values.next() {
-                Some((row, value))
-            } else {
-                None
+        let nrows = elements.iter().map(|(_, row, _)| *row).max().unwrap_or(0) + 1;
+        let ncols = elements.iter().map(|(col, _, _)| *col).max().unwrap_or(0) + 1;
+
+        let mut col_ptr = vec![0; ncols + 1];
+        let mut row_idx = Vec::with_capacity(elements.len());
+        let mut values = Vec::with_capacity(elements.len());
+
+        let mut current_col = 0;
+        for (col, row, value) in elements {
+            while current_col < col {
+                col_ptr[current_col + 1] = row_idx.len();
+                current_col += 1;
             }
-        } else {
-            None
+            row_idx.push(row);
+            values.push(value);
         }
-    }
-}
-
-// FromIterator implementation to construct a Sparse Matrix from an SparseColIterator
-impl<'a, T> FromIterator<Option<SparseRowIter<'a, T>>> for SparseMatrix<T>
-where
-    T: Copy,
-{
-    fn from_iter<I>(iter: I) -> Self
-    where
-        I: IntoIterator<Item = Option<SparseRowIter<'a, T>>>,
-    {
-        let mut col_idx = Vec::new();
-        let mut row_idx = Vec::new();
-        let mut values = Vec::new();
-
-        let mut col_index = 0;
-
-        for row_iter in iter.into_iter().flatten() {
-            col_idx.push(col_index);
-
-            for (row, value) in row_iter {
-                row_idx.push(row);
-                values.push(value);
-            }
-
-            col_index = values.len();
-        }
-
-        col_idx.push(col_index);
-
-        let nrows = row_idx.iter().copied().max().map_or(0, |x| x + 1);
-        let ncols = col_idx.len() - 1;
+        col_ptr[current_col + 1] = row_idx.len();
 
         SparseMatrix {
             nrows,
             ncols,
-            col_ptr: col_idx,
+            col_ptr,
             row_idx,
             values,
         }

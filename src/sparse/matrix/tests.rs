@@ -1,4 +1,5 @@
 use super::*;
+use num::Complex;
 
 #[test]
 fn test_zeros_matrix() {
@@ -12,6 +13,34 @@ fn test_zeros_matrix() {
     assert_eq!(matrix.col_ptr, vec![0; n + 1]);
     assert_eq!(matrix.row_idx, vec![0; nzmax]);
     assert_eq!(matrix.values, vec![0.0; nzmax]);
+}
+
+#[test]
+fn test_zeros_matrix2() {
+    let m = 3;
+    let n = 3;
+    let nzmax = 9;
+    let matrix: SparseMatrix<i64> = SparseMatrix::zeros(m, n, nzmax);
+
+    assert_eq!(matrix.nrows(), m);
+    assert_eq!(matrix.ncols(), n);
+    assert_eq!(matrix.col_ptr, vec![0; n + 1]);
+    assert_eq!(matrix.row_idx, vec![0; nzmax]);
+    assert_eq!(matrix.values, vec![0; nzmax]);
+}
+
+#[test]
+fn test_zeros_matrix3() {
+    let m = 3;
+    let n = 3;
+    let nzmax = 9;
+    let matrix: SparseMatrix<Complex<f64>> = SparseMatrix::zeros(m, n, nzmax);
+
+    assert_eq!(matrix.nrows(), m);
+    assert_eq!(matrix.ncols(), n);
+    assert_eq!(matrix.col_ptr, vec![0; n + 1]);
+    assert_eq!(matrix.row_idx, vec![0; nzmax]);
+    assert_eq!(matrix.values, vec![Complex::default(); nzmax]);
 }
 
 #[test]
@@ -85,24 +114,6 @@ fn test_quick_trim() {
 }
 
 #[test]
-fn test_iter() {
-    let col_idx = vec![0, 1, 3, 3];
-    let row_idx = vec![0, 1, 2];
-    let values = vec![1.0, 2.0, 3.0];
-    let matrix: SparseMatrix<f64> = SparseMatrix::new(3, 3, col_idx, row_idx, values);
-
-    let mut col_iter = matrix.iter();
-    let mut col_0 = col_iter.next().unwrap().unwrap();
-    let mut col_1 = col_iter.next().unwrap().unwrap();
-    let col_2 = col_iter.next().unwrap();
-
-    assert_eq!(col_0.next(), Some((0, 1.0)));
-    assert_eq!(col_1.next(), Some((1, 2.0)));
-    assert_eq!(col_1.next(), Some((2, 3.0)));
-    assert!(col_2.is_none());
-}
-
-#[test]
 fn test_scale() {
     let mut matrix: SparseMatrix<f64> =
         SparseMatrix::new(3, 3, vec![0, 1, 3, 3], vec![0, 1, 2], vec![1.0, 2.0, 3.0]);
@@ -161,21 +172,6 @@ fn test_from_triples() {
 }
 
 #[test]
-fn test_from_iter_identity() {
-    let matrix = SparseMatrix {
-        nrows: 3,
-        ncols: 3,
-        col_ptr: vec![0, 2, 4, 5],
-        row_idx: vec![0, 2, 1, 2, 1],
-        values: vec![1.0, 3.0, 2.0, 4.0, 5.0],
-    };
-
-    let result_matrix: SparseMatrix<f64> = matrix.iter().collect();
-
-    assert_eq!(matrix, result_matrix);
-}
-
-#[test]
 fn test_add() {
     let lhs: SparseMatrix<f64> = vec![
         vec![1.0, 2.0, 3.0],
@@ -222,6 +218,70 @@ fn test_add3() {
 }
 
 #[test]
+fn test_add_complex() {
+    let lhs: SparseMatrix<Complex<f64>> = vec![
+        vec![
+            Complex::new(1.0, 1.0),
+            Complex::new(0.0, 0.0),
+            Complex::new(3.0, 3.0),
+        ],
+        vec![
+            Complex::new(0.0, 0.0),
+            Complex::new(5.0, 5.0),
+            Complex::new(0.0, 0.0),
+        ],
+        vec![
+            Complex::new(7.0, 7.0),
+            Complex::new(0.0, 0.0),
+            Complex::new(9.0, 9.0),
+        ],
+    ]
+    .into();
+
+    let rhs: SparseMatrix<Complex<f64>> = vec![
+        vec![
+            Complex::new(1.0, -1.0),
+            Complex::new(2.0, 2.0),
+            Complex::new(3.0, -3.0),
+        ],
+        vec![
+            Complex::new(4.0, 4.0),
+            Complex::new(0.0, 0.0),
+            Complex::new(6.0, 6.0),
+        ],
+        vec![
+            Complex::new(0.0, 0.0),
+            Complex::new(8.0, 8.0),
+            Complex::new(0.0, 0.0),
+        ],
+    ]
+    .into();
+
+    let exp: SparseMatrix<Complex<f64>> = vec![
+        vec![
+            Complex::new(2.0, 0.0),
+            Complex::new(2.0, 2.0),
+            Complex::new(6.0, 0.0),
+        ],
+        vec![
+            Complex::new(4.0, 4.0),
+            Complex::new(5.0, 5.0),
+            Complex::new(6.0, 6.0),
+        ],
+        vec![
+            Complex::new(7.0, 7.0),
+            Complex::new(8.0, 8.0),
+            Complex::new(9.0, 9.0),
+        ],
+    ]
+    .into();
+
+    let res = &lhs + &rhs;
+
+    assert_eq!(res, exp);
+}
+
+#[test]
 fn test_mul() {
     let lhs: SparseMatrix<f64> = vec![
         vec![1.0, 2.0, 3.0],
@@ -244,8 +304,8 @@ fn test_mul() {
 
     let res = lhs * rhs;
     assert_eq!(res, exp);
-    assert_eq!(res.ncols(),3);
-    assert_eq!(res.nrows(),3);
+    assert_eq!(res.ncols(), 3);
+    assert_eq!(res.nrows(), 3);
 }
 
 #[test]
@@ -256,8 +316,8 @@ fn test_mul2() {
 
     let res = lhs * rhs;
     assert_eq!(res, exp);
-    assert_eq!(res.ncols(),2);
-    assert_eq!(res.nrows(),2);
+    assert_eq!(res.ncols(), 2);
+    assert_eq!(res.nrows(), 2);
 }
 
 #[test]
@@ -273,6 +333,97 @@ fn test_mul3() {
 
     let res = rhs * lhs;
     assert_eq!(res, exp);
-    assert_eq!(res.ncols(),3);
-    assert_eq!(res.nrows(),3);
+    assert_eq!(res.ncols(), 3);
+    assert_eq!(res.nrows(), 3);
+}
+
+#[test]
+fn test_sparse_iter() {
+    let matrix: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 0.0],
+        vec![0.0, 2.0, 0.0],
+        vec![0.0, 0.0, 3.0],
+    ]
+    .into();
+
+    let mut iter = SparseIter::new(&matrix);
+    assert_eq!(iter.next(), Some((0, 0, 1.0)));
+    assert_eq!(iter.next(), Some((1, 1, 2.0)));
+    assert_eq!(iter.next(), Some((2, 2, 3.0)));
+    assert_eq!(iter.next(), None);
+}
+
+#[test]
+fn test_sparse_iter_complex() {
+    let matrix: SparseMatrix<Complex<f64>> = vec![
+        vec![
+            Complex::new(1.0, 1.0),
+            Complex::new(0.0, 0.0),
+            Complex::new(0.0, 0.0),
+        ],
+        vec![
+            Complex::new(0.0, 0.0),
+            Complex::new(2.0, 2.0),
+            Complex::new(0.0, 0.0),
+        ],
+        vec![
+            Complex::new(0.0, 0.0),
+            Complex::new(0.0, 0.0),
+            Complex::new(3.0, 3.0),
+        ],
+    ]
+    .into();
+
+    let mut iter = SparseIter::new(&matrix);
+    assert_eq!(iter.next(), Some((0, 0, Complex::new(1.0, 1.0))));
+    assert_eq!(iter.next(), Some((1, 1, Complex::new(2.0, 2.0))));
+    assert_eq!(iter.next(), Some((2, 2, Complex::new(3.0, 3.0))));
+    assert_eq!(iter.next(), None);
+}
+
+#[test]
+fn test_from_iterator_complex() {
+    let elements = vec![
+        (0, 0, Complex::new(1.0, 1.0)),
+        (1, 0, Complex::new(4.0, 4.0)),
+        (1, 1, Complex::new(2.0, 2.0)),
+        (2, 1, Complex::new(5.0, 5.0)),
+        (2, 2, Complex::new(3.0, 3.0)),
+    ];
+    let matrix: SparseMatrix<Complex<f64>> = elements.into_iter().collect();
+
+    let expected: SparseMatrix<Complex<f64>> = vec![
+        vec![
+            Complex::new(1.0, 1.0),
+            Complex::new(4.0, 4.0),
+            Complex::new(0.0, 0.0),
+        ],
+        vec![
+            Complex::new(0.0, 0.0),
+            Complex::new(2.0, 2.0),
+            Complex::new(5.0, 5.0),
+        ],
+        vec![
+            Complex::new(0.0, 0.0),
+            Complex::new(0.0, 0.0),
+            Complex::new(3.0, 3.0),
+        ],
+    ]
+    .into();
+
+    assert_eq!(matrix, expected);
+}
+
+#[test]
+fn test_from_iter_identity() {
+    let matrix: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 3.0],
+        vec![0.0, 5.0, 0.0],
+        vec![7.0, 0.0, 9.0],
+    ]
+    .into();
+
+    let result_matrix: SparseMatrix<f64> = matrix.iter().collect();
+
+    assert_eq!(matrix, result_matrix);
 }
