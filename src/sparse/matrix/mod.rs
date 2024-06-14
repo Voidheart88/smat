@@ -258,7 +258,7 @@ where
 
 impl<T> std::ops::Add<SparseMatrix<T>> for SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+    T: Copy + std::ops::Add<Output = T>,
 {
     type Output = SparseMatrix<T>;
 
@@ -269,7 +269,7 @@ where
 
 impl<T> std::ops::Add<&SparseMatrix<T>> for SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+    T: Copy + std::ops::Add<Output = T>,
 {
     type Output = SparseMatrix<T>;
 
@@ -280,7 +280,7 @@ where
 
 impl<T> std::ops::Add<SparseMatrix<T>> for &SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::Mul<Output = T> + std::ops::Add<Output = T>,
+    T: Copy + std::ops::Add<Output = T>,
 {
     type Output = SparseMatrix<T>;
 
