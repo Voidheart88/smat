@@ -3,31 +3,32 @@ use std::ops::Mul;
 use super::matrix::SparseMatrix;
 
 pub(crate) fn scatter<T>(
-    a: &SparseMatrix<T>,
-    j: usize,
-    beta: T,
-    w: &mut [usize],
-    x: &mut [T],
-    mark: usize,
-    c: &mut SparseMatrix<T>,
-    nz: usize,
+    matrix_a: &SparseMatrix<T>,
+    col_index: usize,
+    scalar: T,
+    row_marker: &mut [usize],
+    row_values: &mut [T],
+    marker_value: usize,
+    result_matrix: &mut SparseMatrix<T>,
+    non_zero_count: usize,
 ) -> usize
 where
     T: Copy + Default + Mul<Output = T> + PartialEq + std::ops::AddAssign,
 {
-    let mut i;
-    let mut nzo = nz;
-    for p in a.col_ptr()[j]..a.col_ptr()[j + 1] {
-        i = a.row_idx()[p];
-        if w[i] < mark {
-            w[i] = mark;
-            c.row_idx_mut()[nzo] = i;
-            nzo += 1;
-            x[i] = beta * a.values()[p];
+    let mut row_index;
+    let mut new_non_zero_count = non_zero_count;
+
+    for p in matrix_a.col_ptr()[col_index]..matrix_a.col_ptr()[col_index + 1] {
+        row_index = matrix_a.row_idx()[p];
+        if row_marker[row_index] < marker_value {
+            row_marker[row_index] = marker_value;
+            result_matrix.row_idx_mut()[new_non_zero_count] = row_index;
+            new_non_zero_count += 1;
+            row_values[row_index] = scalar * matrix_a.values()[p];
         } else {
-            x[i] += beta * a.values()[p];
+            row_values[row_index] += scalar * matrix_a.values()[p];
         }
     }
 
-    nzo
+    new_non_zero_count
 }

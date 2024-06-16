@@ -296,44 +296,44 @@ where
     type Output = SparseMatrix<T>;
 
     fn mul(self, rhs: &SparseMatrix<T>) -> Self::Output {
-        let mut nz = 0;
-        let mut w = vec![0; self.nrows()];
-        let mut x = vec![T::default(); self.nrows()];
+        let mut non_zero_count = 0;
+        let mut row_marker = vec![0; self.nrows()];
+        let mut row_values = vec![T::default(); self.nrows()];
 
-        let space = 2
+        let required_space = 2
             * (self.col_ptr().last().copied().unwrap_or(0)
                 + rhs.col_ptr().last().copied().unwrap_or(0))
             + self.nrows();
 
-        let mut acc: SparseMatrix<T> = SparseMatrix::zeros(self.nrows(), rhs.ncols(), space);
+        let mut result: SparseMatrix<T> = SparseMatrix::zeros(self.nrows(), rhs.ncols(), required_space);
 
-        for j in 0..rhs.ncols() {
-            if nz + self.nrows() > acc.values().len() {
-                let nsz = 2 * acc.values().len() + self.nrows();
-                acc.row_idx_mut().resize(nsz, 0);
-                acc.values_mut().resize(nsz, T::default());
+        for col in 0..rhs.ncols() {
+            if non_zero_count + self.nrows() > result.values().len() {
+                let new_size = 2 * result.values().len() + self.nrows();
+                result.row_idx_mut().resize(new_size, 0);
+                result.values_mut().resize(new_size, T::default());
             }
-            acc.col_ptr_mut()[j] = nz;
-            for p in rhs.col_ptr()[j]..rhs.col_ptr()[j + 1] {
-                nz = scatter(
+            result.col_ptr_mut()[col] = non_zero_count;
+            for p in rhs.col_ptr()[col]..rhs.col_ptr()[col + 1] {
+                non_zero_count = scatter(
                     self,
                     rhs.row_idx()[p],
                     rhs.values()[p],
-                    &mut w[..],
-                    &mut x[..],
-                    j + 1,
-                    &mut acc,
-                    nz,
+                    &mut row_marker[..],
+                    &mut row_values[..],
+                    col + 1,
+                    &mut result,
+                    non_zero_count,
                 );
             }
-            for p in acc.col_ptr()[j] as usize..nz {
-                acc.values_mut()[p] = x[acc.row_idx()[p]];
+            for p in result.col_ptr()[col] as usize..non_zero_count {
+                result.values_mut()[p] = row_values[result.row_idx()[p]];
             }
         }
-        acc.col_ptr_mut()[rhs.ncols()] = nz;
-        acc.quick_trim();
+        result.col_ptr_mut()[rhs.ncols()] = non_zero_count;
+        result.quick_trim();
 
-        acc
+        result
     }
 }
 
