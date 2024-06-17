@@ -1,3 +1,3 @@
-pub(crate) mod matrix;
+pub mod matrix;
 pub(crate) mod utils;
-pub(crate) mod vector;
+pub mod vector;

@@ -305,7 +305,8 @@ where
                 + rhs.col_ptr().last().copied().unwrap_or(0))
             + self.nrows();
 
-        let mut result: SparseMatrix<T> = SparseMatrix::zeros(self.nrows(), rhs.ncols(), required_space);
+        let mut result: SparseMatrix<T> =
+            SparseMatrix::zeros(self.nrows(), rhs.ncols(), required_space);
 
         for col in 0..rhs.ncols() {
             if non_zero_count + self.nrows() > result.values().len() {

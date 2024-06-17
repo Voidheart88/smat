@@ -1,6 +1,11 @@
-#![allow(dead_code)]
+//#![allow(dead_code)]
 mod sparse;
+mod symbolic;
 mod triple;
+
+pub use sparse::matrix::SparseMatrix;
+pub use sparse::vector::SparseVector;
+pub use symbolic::Symbolic;
 
 #[allow(unused)]
 #[macro_use]
