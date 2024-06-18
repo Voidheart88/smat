@@ -6,11 +6,11 @@ pub use iterators::*;
 /// Matrix in compressed sparse column (CSC) format
 #[derive(Clone, Debug)]
 pub struct SparseMatrix<T> {
-    nrows: usize,
-    ncols: usize,
-    col_ptr: Vec<usize>,
-    row_idx: Vec<usize>,
-    values: Vec<T>,
+    nrows: usize,        // m
+    ncols: usize,        // n
+    col_ptr: Vec<usize>, // p
+    row_idx: Vec<usize>, // i
+    values: Vec<T>,      // x
 }
 
 impl<T> SparseMatrix<T>
@@ -172,10 +172,37 @@ where
     }
 
     /// Scales the Matrix by a constant factor
-    ///
     fn scale(&mut self, factor: T) {
         for value in &mut self.values {
             *value = *value * factor;
+        }
+    }
+
+    /// Creates a transpose of the matrix
+    pub fn transpose(&self) -> SparseMatrix<T> {
+        let mut entries: Vec<(usize, usize, T)> = self.iter().collect();
+        entries.sort_by_key(|&(col, row, _)| (row, col));
+
+        let mut col_ptr = vec![0; self.nrows + 1];
+        let mut row_idx = Vec::with_capacity(entries.len());
+        let mut values = Vec::with_capacity(entries.len());
+
+        for &(col, row, value) in &entries {
+            col_ptr[row + 1] += 1;
+            row_idx.push(col);
+            values.push(value);
+        }
+
+        for i in 1..=self.nrows {
+            col_ptr[i] += col_ptr[i - 1];
+        }
+
+        SparseMatrix {
+            nrows: self.ncols,
+            ncols: self.nrows,
+            col_ptr,
+            row_idx,
+            values,
         }
     }
 }

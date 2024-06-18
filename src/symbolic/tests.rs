@@ -31,11 +31,7 @@ fn test_symmetric() {
 
 #[test]
 fn test_dense() {
-    let mat: SparseMatrix<i64> = vec![
-        vec![1, 0, 0], 
-        vec![0, 5, 0], 
-        vec![0, 0, 9]
-    ].into();
+    let mat: SparseMatrix<i64> = vec![vec![1, 0, 0], vec![0, 5, 0], vec![0, 0, 9]].into();
 
     let mut sym: Symbolic<i64> = (&mat).into();
     assert!(sym.is_dense())
@@ -44,11 +40,12 @@ fn test_dense() {
 #[test]
 fn test_dense2() {
     let mat: SparseMatrix<i64> = vec![
-        vec![1, 0, 0, 0], 
-        vec![0, 5, 0, 0], 
+        vec![1, 0, 0, 0],
+        vec![0, 5, 0, 0],
         vec![0, 0, 9, 0],
-        vec![0, 0, 0, 16]
-    ].into();
+        vec![0, 0, 0, 16],
+    ]
+    .into();
 
     let mut sym: Symbolic<i64> = (&mat).into();
     assert!(sym.is_dense())

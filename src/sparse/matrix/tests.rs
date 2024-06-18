@@ -427,3 +427,23 @@ fn test_from_iter_identity() {
 
     assert_eq!(matrix, result_matrix);
 }
+
+#[test]
+fn test_transpose() {
+    let matrix: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+
+
+    let exp: SparseMatrix<f64> = vec![
+        vec![1.0, 4.0, 7.0],
+        vec![2.0, 5.0, 8.0],
+        vec![3.0, 6.0, 9.0],
+    ]
+    .into();
+
+    assert_eq!(matrix.transpose(), exp);
+}
