@@ -50,3 +50,33 @@ fn test_dense2() {
     let mut sym: Symbolic<i64> = (&mat).into();
     assert!(sym.is_dense())
 }
+
+#[test]
+fn test_lu_amd() {
+    let mat: SparseMatrix<f64> = vec![
+        vec![1.0, -1.0, 0.0, 1.0],
+        vec![-1.0, 5.0, 0.0, 0.0],
+        vec![0.0, 0.0, 9.0, 0.0],
+        vec![1.0, 0.0, 0.0, 0.0],
+    ]
+    .into();
+
+    let mut sym: Symbolic<f64> = (&mat).into();
+    let ordering = sym.lu_amd();
+    println!("{ordering:?}");
+}
+
+#[test]
+fn test_lu_amd2() {
+    let mat: SparseMatrix<f64> = vec![
+        vec![0.0, 0.0, 0.0, 1.0],
+        vec![0.0, 5.0, 0.0, 0.0],
+        vec![0.0, 0.0, 9.0, -1.0],
+        vec![1.0, 0.0, -1.0, 1.0],
+    ]
+    .into();
+
+    let mut sym: Symbolic<f64> = (&mat).into();
+    let ordering = sym.lu_amd();
+    println!("{ordering:?}");
+}

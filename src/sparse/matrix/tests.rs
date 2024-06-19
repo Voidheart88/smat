@@ -437,7 +437,6 @@ fn test_transpose() {
     ]
     .into();
 
-
     let exp: SparseMatrix<f64> = vec![
         vec![1.0, 4.0, 7.0],
         vec![2.0, 5.0, 8.0],
@@ -446,4 +445,23 @@ fn test_transpose() {
     .into();
 
     assert_eq!(matrix.transpose(), exp);
+}
+
+#[test]
+fn test_to_weighted_adjacency_matrix() {
+    let matrix: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]
+    .into();
+
+    let exp: SparseMatrix<f64> = vec![
+        vec![0.0, 2.0, 3.0],
+        vec![4.0, 0.0, 6.0],
+        vec![7.0, 8.0, 0.0],
+    ]
+    .into();
+
+    assert_eq!(matrix.to_weighted_adjacency_matrix(), exp);
 }

@@ -27,7 +27,7 @@ where
         while self.current_col < self.matrix.ncols {
             let col_end = self.matrix.col_ptr[self.current_col + 1];
 
-            if self.current_pos < col_end {
+            if self.current_pos < col_end as usize {
                 let row = self.matrix.row_idx[self.current_pos];
                 let value = self.matrix.values[self.current_pos];
                 let result = (self.current_col, row, value);
@@ -36,7 +36,7 @@ where
             }
 
             self.current_col += 1;
-            self.current_pos = self.matrix.col_ptr[self.current_col];
+            self.current_pos = self.matrix.col_ptr[self.current_col as usize] as usize;
         }
 
         None
@@ -54,20 +54,20 @@ where
         let nrows = elements.iter().map(|(_, row, _)| *row).max().unwrap_or(0) + 1;
         let ncols = elements.iter().map(|(col, _, _)| *col).max().unwrap_or(0) + 1;
 
-        let mut col_ptr = vec![0; ncols + 1];
+        let mut col_ptr: Vec<isize> = vec![0; ncols + 1];
         let mut row_idx = Vec::with_capacity(elements.len());
         let mut values = Vec::with_capacity(elements.len());
 
         let mut current_col = 0;
         for (col, row, value) in elements {
             while current_col < col {
-                col_ptr[current_col + 1] = row_idx.len();
+                col_ptr[current_col + 1] = row_idx.len() as isize;
                 current_col += 1;
             }
             row_idx.push(row);
             values.push(value);
         }
-        col_ptr[current_col + 1] = row_idx.len();
+        col_ptr[current_col + 1] = row_idx.len() as isize;
 
         SparseMatrix {
             nrows,

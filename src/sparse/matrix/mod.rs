@@ -8,7 +8,7 @@ pub use iterators::*;
 pub struct SparseMatrix<T> {
     nrows: usize,        // m
     ncols: usize,        // n
-    col_ptr: Vec<usize>, // p
+    col_ptr: Vec<isize>, // p
     row_idx: Vec<usize>, // i
     values: Vec<T>,      // x
 }
@@ -20,14 +20,14 @@ where
     pub fn new(
         nrows: usize,
         ncols: usize,
-        col_idx: Vec<usize>,
+        col_ptr: Vec<isize>,
         row_idx: Vec<usize>,
         values: Vec<T>,
     ) -> SparseMatrix<T> {
         SparseMatrix {
             nrows,
             ncols,
-            col_ptr: col_idx,
+            col_ptr,
             row_idx,
             values,
         }
@@ -44,12 +44,12 @@ where
     }
 
     #[inline]
-    pub fn col_ptr(&self) -> &Vec<usize> {
+    pub fn col_ptr(&self) -> &Vec<isize> {
         &self.col_ptr
     }
 
     #[inline]
-    pub fn col_ptr_mut(&mut self) -> &mut Vec<usize> {
+    pub fn col_ptr_mut(&mut self) -> &mut Vec<isize> {
         &mut self.col_ptr
     }
 
@@ -87,7 +87,7 @@ where
 
     /// Create a sparse eye matrix
     pub fn eye(val: T, n: usize) -> SparseMatrix<T> {
-        let col_ptr = (0..=n).map(|i| i).collect();
+        let col_ptr = (0..=n).map(|i| i as isize).collect();
         let row_idx = (0..n).collect();
         let values = vec![val; n];
 
@@ -107,8 +107,8 @@ where
             .zip(self.col_ptr.iter().skip(1))
             .enumerate()
             .flat_map(|(j, (&start, &end))| (start..end).map(move |i| (i, j)))
-            .find(|&(i, j)| self.row_idx[i] == row && j == column)
-            .map(|(i, _)| self.values[i])
+            .find(|&(i, j)| self.row_idx[i as usize] == row && j == column)
+            .map(|(i, _)| self.values[i as usize])
     }
 
     /// Trims the sparse matrix by removing all elements with zero values.
@@ -139,7 +139,7 @@ where
                 .filter(|&&index| index < self.col_ptr[j] as usize)
                 .count();
             if num_removed > 0 {
-                self.col_ptr[j] -= num_removed;
+                self.col_ptr[j] -= num_removed as isize;
             }
         }
     }
@@ -205,6 +205,33 @@ where
             values,
         }
     }
+
+    /// Converts the current sparse matrix to its weighted adjacency matrix representation.
+    pub fn to_weighted_adjacency_matrix(&self) -> SparseMatrix<T> {
+        let mut adj_col_ptr: Vec<isize> = vec![0; self.ncols + 1];
+        let mut adj_row_idx = Vec::with_capacity(self.row_idx.len());
+        let mut adj_values = Vec::with_capacity(self.values.len());
+
+        for col in 0..self.ncols {
+            adj_col_ptr[col] = adj_row_idx.len() as isize;
+            for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
+                let row = self.row_idx[idx as usize];
+                if row != col && self.values[idx as usize] != T::default() {
+                    adj_row_idx.push(row);
+                    adj_values.push(self.values[idx as usize]); // Using the actual weight of the edge
+                }
+            }
+        }
+        adj_col_ptr[self.ncols] = adj_row_idx.len() as isize;
+
+        SparseMatrix {
+            nrows: self.nrows,
+            ncols: self.ncols,
+            col_ptr: adj_col_ptr,
+            row_idx: adj_row_idx,
+            values: adj_values,
+        }
+    }
 }
 
 impl<T> std::ops::Mul<T> for SparseMatrix<T>
@@ -240,7 +267,7 @@ where
     fn add(self, rhs: &SparseMatrix<T>) -> Self::Output {
         assert!(self.nrows == rhs.nrows && self.ncols == rhs.ncols);
 
-        let mut col_ptr = vec![0; self.ncols + 1];
+        let mut col_ptr: Vec<isize> = vec![0; self.ncols + 1];
         let mut row_idx = Vec::new();
         let mut values = Vec::new();
 
@@ -252,25 +279,27 @@ where
 
             while self_pos < self_end || rhs_pos < rhs_end {
                 if self_pos < self_end
-                    && (rhs_pos >= rhs_end || self.row_idx[self_pos] < rhs.row_idx[rhs_pos])
+                    && (rhs_pos >= rhs_end
+                        || self.row_idx[self_pos as usize] < rhs.row_idx[rhs_pos as usize])
                 {
-                    row_idx.push(self.row_idx[self_pos]);
-                    values.push(self.values[self_pos]);
+                    row_idx.push(self.row_idx[self_pos as usize]);
+                    values.push(self.values[self_pos as usize]);
                     self_pos += 1;
                 } else if rhs_pos < rhs_end
-                    && (self_pos >= self_end || rhs.row_idx[rhs_pos] < self.row_idx[self_pos])
+                    && (self_pos >= self_end
+                        || rhs.row_idx[rhs_pos as usize] < self.row_idx[self_pos as usize])
                 {
-                    row_idx.push(rhs.row_idx[rhs_pos]);
-                    values.push(rhs.values[rhs_pos]);
+                    row_idx.push(rhs.row_idx[rhs_pos as usize]);
+                    values.push(rhs.values[rhs_pos as usize]);
                     rhs_pos += 1;
                 } else {
-                    row_idx.push(self.row_idx[self_pos]);
-                    values.push(self.values[self_pos] + rhs.values[rhs_pos]);
+                    row_idx.push(self.row_idx[self_pos as usize]);
+                    values.push(self.values[self_pos as usize] + rhs.values[rhs_pos as usize]);
                     self_pos += 1;
                     rhs_pos += 1;
                 }
             }
-            col_ptr[col + 1] = row_idx.len();
+            col_ptr[col + 1] = row_idx.len() as isize;
         }
 
         SparseMatrix {
@@ -330,10 +359,10 @@ where
         let required_space = 2
             * (self.col_ptr().last().copied().unwrap_or(0)
                 + rhs.col_ptr().last().copied().unwrap_or(0))
-            + self.nrows();
+            + self.nrows() as isize;
 
         let mut result: SparseMatrix<T> =
-            SparseMatrix::zeros(self.nrows(), rhs.ncols(), required_space);
+            SparseMatrix::zeros(self.nrows(), rhs.ncols(), required_space as usize);
 
         for col in 0..rhs.ncols() {
             if non_zero_count + self.nrows() > result.values().len() {
@@ -341,12 +370,12 @@ where
                 result.row_idx_mut().resize(new_size, 0);
                 result.values_mut().resize(new_size, T::default());
             }
-            result.col_ptr_mut()[col] = non_zero_count;
+            result.col_ptr_mut()[col] = non_zero_count as isize;
             for p in rhs.col_ptr()[col]..rhs.col_ptr()[col + 1] {
                 non_zero_count = scatter(
                     self,
-                    rhs.row_idx()[p],
-                    rhs.values()[p],
+                    rhs.row_idx()[p as usize],
+                    rhs.values()[p as usize],
                     &mut row_marker[..],
                     &mut row_values[..],
                     col + 1,
@@ -358,7 +387,7 @@ where
                 result.values_mut()[p] = row_values[result.row_idx()[p]];
             }
         }
-        result.col_ptr_mut()[rhs.ncols()] = non_zero_count;
+        result.col_ptr_mut()[rhs.ncols()] = non_zero_count as isize;
         result.quick_trim();
 
         result
@@ -428,7 +457,7 @@ where
 
         let nrows = dense.len();
         let ncols = dense[0].len();
-        let mut col_idx = vec![0; ncols + 1];
+        let mut col_ptr: Vec<isize> = vec![0; ncols + 1];
         let mut row_idx = vec![];
         let mut values = vec![];
 
@@ -439,13 +468,13 @@ where
                     values.push(dense[row][col]);
                 }
             }
-            col_idx[col + 1] = values.len();
+            col_ptr[col + 1] = values.len() as isize;
         }
 
         SparseMatrix {
             nrows,
             ncols,
-            col_ptr: col_idx,
+            col_ptr,
             row_idx,
             values,
         }
@@ -454,7 +483,7 @@ where
 
 impl From<&Triples<f64>> for SparseMatrix<f64> {
     fn from(triples: &Triples<f64>) -> Self {
-        let mut col_idx = vec![0; triples.ncols() + 1];
+        let mut col_ptr: Vec<isize> = vec![0; triples.ncols() + 1];
         let mut row_idx = vec![0; triples.values().len()];
         let mut values = vec![0.0; triples.values().len()];
 
@@ -465,17 +494,17 @@ impl From<&Triples<f64>> for SparseMatrix<f64> {
         }
 
         for i in 0..triples.ncols() {
-            col_idx[i + 1] = col_idx[i] + count[i];
+            col_ptr[i + 1] = col_ptr[i] + count[i];
         }
 
-        let mut next = col_idx.clone();
+        let mut next = col_ptr.clone();
 
         for i in 0..triples.values().len() {
             let col = triples.column_idx()[i];
             let dest = next[col];
 
-            row_idx[dest] = triples.row_idx()[i];
-            values[dest] = triples.values()[i];
+            row_idx[dest as usize] = triples.row_idx()[i];
+            values[dest as usize] = triples.values()[i];
 
             next[col] += 1;
         }
@@ -483,7 +512,7 @@ impl From<&Triples<f64>> for SparseMatrix<f64> {
         SparseMatrix {
             nrows: triples.nrows(),
             ncols: triples.ncols(),
-            col_ptr: col_idx,
+            col_ptr,
             row_idx,
             values,
         }

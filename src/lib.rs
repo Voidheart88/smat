@@ -1,6 +1,7 @@
-//#![allow(dead_code)]
+#![allow(dead_code)]
 mod sparse;
 mod symbolic;
+//mod solver;
 mod triple;
 
 pub use sparse::matrix::SparseMatrix;
