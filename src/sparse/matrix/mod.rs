@@ -575,5 +575,17 @@ impl From<&Triples<f64>> for SparseMatrix<f64> {
     }
 }
 
+impl<T> Default for SparseMatrix<T> {
+    fn default() -> Self {
+        Self {
+            nrows: Default::default(),
+            ncols: Default::default(),
+            col_ptr: Default::default(),
+            row_idx: Default::default(),
+            values: Default::default(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests;

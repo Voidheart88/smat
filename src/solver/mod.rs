@@ -1,14 +1,11 @@
 mod numeric;
-use numeric::Numeric;
+use numeric::LuNmrc;
 
 use crate::{SparseMatrix, Symbolic};
 
 pub struct LUSolver<'a, 'b, T> {
     matrix: &'a SparseMatrix<T>,
     symb: &'b Symbolic<'a, T>,
-
-    lnz: usize,
-    unz: usize,
 }
 
 impl<'a, 'b, T> LUSolver<'a, 'b, T>
@@ -21,7 +18,7 @@ where
         + std::ops::Mul<Output = T>
         + std::ops::Div<Output = T>,
 {
-    fn solve(&self, tol: T) {
+    fn solve(&self, tol: f64) {
         let n = self.matrix.ncols();
         let mut col;
         let mut top;
@@ -29,44 +26,39 @@ where
         let mut a_f;
         let mut t;
         let mut pivot;
-        let mut x = vec![T::default(); n];
+        let mut x = vec![0.; n];
         let mut xi = vec![0; 2 * n];
-        let mut n_mat = Numeric {
+        let mut n_mat = LuNmrc {
             l: SparseMatrix::zeros(n, n, n * n / 2),
             u: SparseMatrix::zeros(n, n, n * n / 2),
-            pinv: Some(vec![0; n]),
-            b: Vec::new(),
+            pivot: Some(vec![0; n]),
         };
 
-        x[0..n].fill(T::default());
-        n_mat.pinv.as_mut().unwrap()[0..n].fill(-1);
-        n_mat.l.col_ptr_mut()[0..n + 1].fill(0);
+        x[0..n].fill(0.);
+        n_mat.pivot.as_mut().unwrap()[0..n].fill(-1);
 
-        self.lnz = 0;
-        self.unz = 0;
+        s.lnz = 0;
+        s.unz = 0;
         for k in 0..n {
-            n_mat.l.col_ptr_mut()[k] = self.lnz as isize;
-            n_mat.u.col_ptr_mut()[k] = self.unz as isize;
-            if self.lnz + n > n_mat.l.values().len() {
-                let nsz = 2 * n_mat.l.values().len() + n;
-                n_mat.l.row_idx().resize(nsz, 0);
-                n_mat.l.values().resize(nsz, 0.);
+            n_mat.l.p[k] = s.lnz as isize;
+            n_mat.u.p[k] = s.unz as isize;
+
+            if s.lnz + n > n_mat.l.nzmax {
+                let nsz = 2 * n_mat.l.nzmax + n;
+                n_mat.l.nzmax = nsz;
+                n_mat.l.i.resize(nsz, 0);
+                n_mat.l.x.resize(nsz, 0.);
             }
-            if self.unz + n > n_mat.u.values().len() {
-                let nsz = 2 * n_mat.u.values().len() + n;
-                n_mat.u.row_idx().resize(nsz, 0);
-                n_mat.u.values().resize(nsz, 0.);
+            if s.unz + n > n_mat.u.nzmax {
+                let nsz = 2 * n_mat.u.nzmax + n;
+                n_mat.u.nzmax = nsz;
+                n_mat.u.i.resize(nsz, 0);
+                n_mat.u.x.resize(nsz, 0.);
             }
 
-            col = self.q.as_ref().map_or(k, |q| q[k] as usize);
-            top = splsolve(
-                &mut n_mat.l,
-                self.matrix,
-                col,
-                &mut xi[..],
-                &mut x[..],
-                &n_mat.pinv,
-            );
+            col = s.q.as_ref().map_or(k, |q| q[k] as usize);
+            top = splsolve(&mut n_mat.l, a, col, &mut xi[..], &mut x[..], &n_mat.pinv);
+
             ipiv = -1;
             a_f = -1.;
             for &i in xi[top..n].iter() {
@@ -78,41 +70,39 @@ where
                         ipiv = i as isize;
                     }
                 } else {
-                    n_mat.u.i[self.unz] = n_mat.pinv.as_ref().unwrap()[i] as usize;
-                    n_mat.u.x[self.unz] = x[i];
-                    self.unz += 1;
+                    n_mat.u.i[s.unz] = n_mat.pinv.as_ref().unwrap()[i] as usize;
+                    n_mat.u.x[s.unz] = x[i];
+                    s.unz += 1;
                 }
             }
             if ipiv == -1 || a_f <= 0. {
                 panic!("Could not find a pivot");
             }
-            if n_mat.pinv.as_ref().unwrap()[col] < T::default() && f64::abs(x[col]) >= a_f * tol {
+            if n_mat.pinv.as_ref().unwrap()[col] < 0 && f64::abs(x[col]) >= a_f * tol {
                 ipiv = col as isize;
             }
 
             pivot = x[ipiv as usize];
-            n_mat.u.row_idx_mut()[self.unz] = k;
-            n_mat.u.values_mut()[self.unz] = pivot;
-            self.unz += 1;
+            n_mat.u.i[s.unz] = k;
+            n_mat.u.x[s.unz] = pivot;
+            s.unz += 1;
             n_mat.pinv.as_mut().unwrap()[ipiv as usize] = k as isize;
-            n_mat.l.row_idx_mut()[self.lnz] = ipiv as usize;
-            n_mat.l.values_mut()[self.lnz] = 1.;
-            self.lnz += 1;
+            n_mat.l.i[s.lnz] = ipiv as usize;
+            n_mat.l.x[s.lnz] = 1.;
+            s.lnz += 1;
             for &i in xi[top..n].iter() {
                 let i = i as usize;
                 if n_mat.pinv.as_ref().unwrap()[i] < 0 {
-                    n_mat.l.row_idx_mut()[self.lnz] = i;
-                    n_mat.l.values_mut()[self.lnz] = x[i] / pivot;
-                    self.lnz += 1
+                    n_mat.l.i[s.lnz] = i; 
+                    n_mat.l.x[s.lnz] = x[i] / pivot;
+                    s.lnz += 1
                 }
-                x[i] = T::default();
+                x[i] = 0.;
             }
         }
-
-        n_mat.l.col_ptr_mut()[n] = self.lnz as isize;
-        n_mat.u.col_ptr_mut()[n] = self.unz as isize;
-
-        for p in 0..self.lnz {
+        n_mat.l.p[n] = s.lnz as isize;
+        n_mat.u.p[n] = s.unz as isize;
+        for p in 0..s.lnz {
             n_mat.l.i[p] = n_mat.pinv.as_ref().unwrap()[n_mat.l.i[p]] as usize;
         }
         n_mat.l.quick_trim();
@@ -131,24 +121,18 @@ fn splsolve<T>(
     pinv: &Option<Vec<isize>>,
 ) -> usize
 where
-    T: Copy
-        + Default
-        + PartialEq
-        + std::ops::Add<Output = T>
-        + std::ops::Sub<Output = T>
-        + std::ops::Mul<Output = T>
-        + std::ops::Div<Output = T>,
+    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
 {
     let mut jnew;
     let top = reach(l, b, k, &mut xi[..], pinv);
 
-    for p in top..l.ncols() {
-        x[xi[p] as usize] = T::default();
+    for p in top..l.n {
+        x[xi[p] as usize] = 0.;
     }
     for p in b.p[k] as usize..b.p[k + 1] as usize {
         x[b.i[p]] = b.x[p];
     }
-    for j in xi.iter().take(l.ncols()).skip(top) {
+    for j in xi.iter().take(l.n).skip(top) {
         let j_u = *j as usize;
         jnew = match pinv {
             Some(pinv) => pinv[j_u],
@@ -173,24 +157,18 @@ fn reach<T>(
     pinv: &Option<Vec<isize>>,
 ) -> usize
 where
-    T: Copy
-        + Default
-        + PartialEq
-        + std::ops::Add<Output = T>
-        + std::ops::Sub<Output = T>
-        + std::ops::Mul<Output = T>
-        + std::ops::Div<Output = T>,
+    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
 {
     let mut top = l.ncols();
 
     for p in b.col_ptr()[k] as usize..b.col_ptr()[k + 1] as usize {
-        if !marked(&l.col_ptr()[..], b.row_idx()[p]) {
+        if !marked(&l.col_ptr_mut()[..], b.row_idx()[p]) {
             let n = l.ncols();
             top = dfs(b.row_idx()[p], l, top, &mut xi[..], &n, pinv);
         }
     }
     for i in xi.iter().take(l.ncols()).skip(top) {
-        mark(&mut l.col_ptr()[..], *i as usize);
+        mark(&mut l.col_ptr_mut()[..], *i as usize);
     }
 
     top
@@ -205,13 +183,7 @@ fn dfs<T>(
     pinv: &Option<Vec<isize>>,
 ) -> usize
 where
-    T: Copy
-        + Default
-        + PartialEq
-        + std::ops::Add<Output = T>
-        + std::ops::Sub<Output = T>
-        + std::ops::Mul<Output = T>
-        + std::ops::Div<Output = T>,
+    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
 {
     let mut i;
     let mut j = j;
@@ -230,7 +202,7 @@ where
             jnew = j as isize;
         }
         if !marked(&l.col_ptr()[..], j) {
-            mark(&mut l.col_ptr()[..], j);
+            mark(&mut l.col_ptr_mut()[..], j);
             if jnew < 0 {
                 xi[pstack_i + head as usize] = 0;
             } else {

@@ -1,33 +1,25 @@
 use crate::SparseMatrix;
 
-/// Numeric Cholesky, LU, or QR factorization
-///
 #[derive(Clone, Debug)]
-pub struct Numeric<T> {
-    /// L for LU and Cholesky, V for QR
+pub struct LuNmrc<T> {
     pub l: SparseMatrix<T>,
-    /// U for LU, R for QR, not used for Cholesky
     pub u: SparseMatrix<T>,
-    /// partial pivoting for LU
-    pub pinv: Option<Vec<isize>>,
-    /// beta [0..n-1] for QR
-    pub b: Vec<f64>,
+    pub pivot: Option<Vec<isize>>,
 }
 
-impl<T> Numeric<T> {
+impl<T> LuNmrc<T> {
     /// Initializes to empty struct
     ///
-    pub fn new() -> Numeric<T> {
-        Numeric {
+    pub fn new() -> LuNmrc<T> {
+        LuNmrc {
             l: SparseMatrix::default(),
             u: SparseMatrix::default(),
-            pinv: None,
-            b: Vec::default(),
+            pivot: None,
         }
     }
 }
 
-impl<T> Default for Numeric<T> {
+impl<T> Default for LuNmrc<T> {
     fn default() -> Self {
         Self::new()
     }
