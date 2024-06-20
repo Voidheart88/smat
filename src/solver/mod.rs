@@ -26,7 +26,7 @@ where
         let mut a_f;
         let mut t;
         let mut pivot;
-        let mut x = vec![0.; n];
+        let mut x = vec![T::default(); n];
         let mut xi = vec![0; 2 * n];
         let mut n_mat = LuNmrc {
             l: SparseMatrix::zeros(n, n, n * n / 2),
@@ -40,37 +40,35 @@ where
         s.lnz = 0;
         s.unz = 0;
         for k in 0..n {
-            n_mat.l.p[k] = s.lnz as isize;
-            n_mat.u.p[k] = s.unz as isize;
+            n_mat.l.col_ptr_mut()[k] = s.lnz as isize;
+            n_mat.u.col_ptr_mut()[k] = s.unz as isize;
 
-            if s.lnz + n > n_mat.l.nzmax {
-                let nsz = 2 * n_mat.l.nzmax + n;
-                n_mat.l.nzmax = nsz;
-                n_mat.l.i.resize(nsz, 0);
-                n_mat.l.x.resize(nsz, 0.);
+            if s.lnz + n > n_mat.l.values().len() {
+                let nsz = 2 * n_mat.l.values().len() + n;
+                n_mat.l.row_idx().resize(nsz, 0);
+                n_mat.l.values().resize(nsz, 0.);
             }
-            if s.unz + n > n_mat.u.nzmax {
-                let nsz = 2 * n_mat.u.nzmax + n;
-                n_mat.u.nzmax = nsz;
-                n_mat.u.i.resize(nsz, 0);
-                n_mat.u.x.resize(nsz, 0.);
+            if s.unz + n > n_mat.u.values().len() {
+                let nsz = 2 * n_mat.u.values().len() + n;
+                n_mat.u.row_idx().resize(nsz, 0);
+                n_mat.u.values().resize(nsz, 0.);
             }
 
             col = s.q.as_ref().map_or(k, |q| q[k] as usize);
-            top = splsolve(&mut n_mat.l, a, col, &mut xi[..], &mut x[..], &n_mat.pinv);
+            top = splsolve(&mut n_mat.l, self.matrix, col, &mut xi[..], &mut x[..], &n_mat.pivot);
 
             ipiv = -1;
             a_f = -1.;
             for &i in xi[top..n].iter() {
                 let i = i as usize;
-                if n_mat.pinv.as_ref().unwrap()[i] < 0 {
+                if n_mat.pivot.as_ref().unwrap()[i] < 0 {
                     t = f64::abs(x[i]);
                     if t > a_f {
                         a_f = t;
                         ipiv = i as isize;
                     }
                 } else {
-                    n_mat.u.i[s.unz] = n_mat.pinv.as_ref().unwrap()[i] as usize;
+                    n_mat.u.i[s.unz] = n_mat.pivot.as_ref().unwrap()[i] as usize;
                     n_mat.u.x[s.unz] = x[i];
                     s.unz += 1;
                 }
@@ -78,7 +76,7 @@ where
             if ipiv == -1 || a_f <= 0. {
                 panic!("Could not find a pivot");
             }
-            if n_mat.pinv.as_ref().unwrap()[col] < 0 && f64::abs(x[col]) >= a_f * tol {
+            if n_mat.pivot.as_ref().unwrap()[col] < 0 && f64::abs(x[col]) >= a_f * tol {
                 ipiv = col as isize;
             }
 
@@ -86,24 +84,24 @@ where
             n_mat.u.i[s.unz] = k;
             n_mat.u.x[s.unz] = pivot;
             s.unz += 1;
-            n_mat.pinv.as_mut().unwrap()[ipiv as usize] = k as isize;
+            n_mat.pivot.as_mut().unwrap()[ipiv as usize] = k as isize;
             n_mat.l.i[s.lnz] = ipiv as usize;
             n_mat.l.x[s.lnz] = 1.;
             s.lnz += 1;
             for &i in xi[top..n].iter() {
                 let i = i as usize;
-                if n_mat.pinv.as_ref().unwrap()[i] < 0 {
+                if n_mat.pivot.as_ref().unwrap()[i] < 0 {
                     n_mat.l.i[s.lnz] = i; 
                     n_mat.l.x[s.lnz] = x[i] / pivot;
                     s.lnz += 1
                 }
-                x[i] = 0.;
+                x[i] = T::default();
             }
         }
         n_mat.l.p[n] = s.lnz as isize;
         n_mat.u.p[n] = s.unz as isize;
         for p in 0..s.lnz {
-            n_mat.l.i[p] = n_mat.pinv.as_ref().unwrap()[n_mat.l.i[p]] as usize;
+            n_mat.l.i[p] = n_mat.pivot.as_ref().unwrap()[n_mat.l.i[p]] as usize;
         }
         n_mat.l.quick_trim();
         n_mat.u.quick_trim();
@@ -127,7 +125,7 @@ where
     let top = reach(l, b, k, &mut xi[..], pinv);
 
     for p in top..l.n {
-        x[xi[p] as usize] = 0.;
+        x[xi[p] as usize] = T::default();
     }
     for p in b.p[k] as usize..b.p[k + 1] as usize {
         x[b.i[p]] = b.x[p];
