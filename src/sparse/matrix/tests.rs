@@ -465,3 +465,28 @@ fn test_to_weighted_adjacency_matrix() {
 
     assert_eq!(matrix.to_weighted_adjacency_matrix(), exp);
 }
+
+#[test]
+fn test_set_function() {
+    let mut matrix: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 3.0],
+        vec![4.0, 5.0, 0.0],
+        vec![0.0, 8.0, 9.0],
+    ]
+    .into();
+
+    let expected_matrix: SparseMatrix<f64> = vec![
+        vec![10.0, 0.0, 3.0],
+        vec![20.0, 5.0, 0.0],
+        vec![0.0, 40.0, 50.0],
+    ]
+    .into();
+
+    // Set new values
+    matrix.set(0, 0, 10.0);
+    matrix.set(1, 0, 20.0);
+    matrix.set(2, 1, 40.0);
+    matrix.set(2, 2, 50.0);
+
+    assert_eq!(matrix, expected_matrix);
+}

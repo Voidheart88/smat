@@ -15,7 +15,13 @@ pub struct SparseMatrix<T> {
 
 impl<T> SparseMatrix<T>
 where
-    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
 {
     pub fn new(
         nrows: usize,
@@ -232,11 +238,27 @@ where
             values: adj_values,
         }
     }
+
+    /// Sets the value at the specified row and column
+    fn set(&mut self, row: usize, col: usize, value: T) {
+        for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
+            if self.row_idx[idx as usize] == row {
+                self.values[idx as usize] = value;
+                return;
+            }
+        }
+    }
 }
 
 impl<T> std::ops::Mul<T> for SparseMatrix<T>
 where
-    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
 {
     type Output = SparseMatrix<T>;
     fn mul(self, rhs: T) -> SparseMatrix<T> {
@@ -248,7 +270,13 @@ where
 
 impl<T> std::ops::Mul<&T> for SparseMatrix<T>
 where
-    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
 {
     type Output = SparseMatrix<T>;
     fn mul(self, rhs: &T) -> SparseMatrix<T> {
@@ -347,7 +375,14 @@ where
 
 impl<T> std::ops::Mul<&SparseMatrix<T>> for &SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialEq,
+    T: Copy
+        + Default
+        + std::ops::AddAssign
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>
+        + PartialEq,
 {
     type Output = SparseMatrix<T>;
 
@@ -396,7 +431,14 @@ where
 
 impl<T> std::ops::Mul<SparseMatrix<T>> for SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialEq,
+    T: Copy
+        + Default
+        + std::ops::AddAssign
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>
+        + PartialEq,
 {
     type Output = SparseMatrix<T>;
 
@@ -407,7 +449,14 @@ where
 
 impl<T> std::ops::Mul<&SparseMatrix<T>> for SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialEq,
+    T: Copy
+        + Default
+        + std::ops::AddAssign
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>
+        + PartialEq,
 {
     type Output = SparseMatrix<T>;
 
@@ -418,7 +467,14 @@ where
 
 impl<T> std::ops::Mul<SparseMatrix<T>> for &SparseMatrix<T>
 where
-    T: Copy + Default + std::ops::AddAssign + std::ops::Mul<Output = T> + PartialEq,
+    T: Copy
+        + Default
+        + std::ops::AddAssign
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>
+        + PartialEq,
 {
     type Output = SparseMatrix<T>;
 

@@ -21,12 +21,22 @@ pub struct Symbolic<'a, T> {
 
     is_symmetric: Option<bool>, // Check if the matrix is symmetric ( Mat = Mat' )
     is_dense: Option<bool>,     // Check if the matrix is dense
+
+    lnz: usize, // non zero entrys in L
+    unz: usize, // non zero entrys in U
 }
 
 /// Construct a Symbolic analysis from a reference to a Sparse Matrix
 impl<'a, T> Symbolic<'a, T>
 where
-    T: Copy + Default + PartialEq + std::ops::Mul<Output = T> + std::ops::AddAssign,
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::AddAssign
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
 {
     fn is_symmetric(&mut self) -> bool {
         if self.is_symmetric.is_some() {
@@ -527,6 +537,8 @@ impl<'a, T> From<&'a SparseMatrix<T>> for Symbolic<'a, T> {
             lu_perm: None,
             is_symmetric: None,
             is_dense: None,
+            lnz: 0,
+            unz: 0,
         }
     }
 }
@@ -554,7 +566,13 @@ fn perform_garbage_collection<T>(
     len: usize,
     n: usize,
 ) where
-    T: Copy + Default + PartialEq + std::ops::Mul<Output = T>,
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
 {
     if elenk > 0 && (*cnz + mindeg as isize) as usize >= c.values().len() {
         for j in 0..n {

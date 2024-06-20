@@ -13,7 +13,14 @@ pub(crate) fn scatter<T>(
     non_zero_count: usize,
 ) -> usize
 where
-    T: Copy + Default + Mul<Output = T> + PartialEq + std::ops::AddAssign,
+    T: Copy
+        + Default
+        + Mul<Output = T>
+        + PartialEq
+        + std::ops::AddAssign
+        + std::ops::Div<Output = T>
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>,
 {
     let mut row_index;
     let mut new_non_zero_count = non_zero_count;
