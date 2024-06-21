@@ -8,7 +8,10 @@ pub struct SparseVector<T> {
     values: Vec<T>,
 }
 
-impl<T> SparseVector<T> {
+impl<T> SparseVector<T>
+where
+    T: Copy,
+{
     pub fn new(len: usize, row_idx: Vec<usize>, values: Vec<T>) -> Self {
         SparseVector {
             len,
@@ -36,6 +39,14 @@ impl<T> SparseVector<T> {
             iterable: self,
         }
     }
+
+    /// Get a Value
+    pub fn get(&self, row: usize) -> Option<T> {
+        self.row_idx
+            .iter()
+            .position(|&r| r == row)
+            .map(|idx| self.values[idx])
+    }
 }
 
 impl<T> Default for SparseVector<T> {
@@ -50,14 +61,14 @@ impl<T> Default for SparseVector<T> {
 
 impl<T> From<Vec<T>> for SparseVector<T>
 where
-    T: PartialOrd<f64>,
+    T: Default + PartialEq,
 {
     fn from(value: Vec<T>) -> Self {
         let len = value.len();
         let (row_idx, values): (Vec<usize>, Vec<T>) = value
             .into_iter()
             .enumerate()
-            .filter(|(_, val)| *val != 0.0)
+            .filter(|(_, val)| *val != T::default())
             .unzip();
         Self {
             len,
@@ -69,7 +80,7 @@ where
 
 impl<T> std::ops::Add for SparseVector<T>
 where
-    T: Copy + std::ops::Add<Output = T> + PartialOrd + Default,
+    T: Copy + std::ops::Add<Output = T> + PartialEq + Default,
 {
     type Output = SparseVector<T>;
 
@@ -130,6 +141,25 @@ where
             row_idx,
             values,
         }
+    }
+}
+
+impl<T> PartialEq for SparseVector<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        // Check if lengths are equal
+        if self.len != other.len {
+            return false;
+        }
+
+        // Check if row indices and values are equal
+        if self.row_idx != other.row_idx || self.values != other.values {
+            return false;
+        }
+
+        true
     }
 }
 

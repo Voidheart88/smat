@@ -21,9 +21,6 @@ pub struct Symbolic<'a, T> {
 
     is_symmetric: Option<bool>, // Check if the matrix is symmetric ( Mat = Mat' )
     is_dense: Option<bool>,     // Check if the matrix is dense
-
-    lnz: usize, // non zero entrys in L
-    unz: usize, // non zero entrys in U
 }
 
 /// Construct a Symbolic analysis from a reference to a Sparse Matrix
@@ -94,7 +91,7 @@ where
     }
 
     // The Sparse/Dense Threshold
-    // If nnz/(m*n) > 10%, the matrix is considered as Dense
+    // If nnz/(m*n) > 10%, the matrix is considered as Dense (FIXME = provide a better threshold)
     fn check_dense(&self) -> bool {
         let size = self.matrix.ncols() * self.matrix.nrows();
         let nnz = self.matrix.row_idx().len();
@@ -537,8 +534,6 @@ impl<'a, T> From<&'a SparseMatrix<T>> for Symbolic<'a, T> {
             lu_perm: None,
             is_symmetric: None,
             is_dense: None,
-            lnz: 0,
-            unz: 0,
         }
     }
 }

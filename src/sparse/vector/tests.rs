@@ -231,3 +231,67 @@ fn test_dense_vector_iter_with_default() {
     assert_eq!(iter.next(), Some(10));
     assert_eq!(iter.next(), None);
 }
+
+#[test]
+fn test_sparse_vector_get() {
+    let vector = SparseVector::new(5, vec![0, 2, 4], vec![1.0, 2.0, 3.0]);
+
+    // Test für vorhandene Elemente
+    assert_eq!(vector.get(0), Some(1.0));
+    assert_eq!(vector.get(2), Some(2.0));
+    assert_eq!(vector.get(4), Some(3.0));
+
+    // Test für nicht vorhandene Elemente
+    assert_eq!(vector.get(1), None);
+    assert_eq!(vector.get(3), None);
+}
+
+#[test]
+fn test_sparse_vector_get_int() {
+    let vector = SparseVector::new(5, vec![0, 2, 4], vec![10, 20, 30]);
+
+    // Test für vorhandene Elemente
+    assert_eq!(vector.get(0), Some(10));
+    assert_eq!(vector.get(2), Some(20));
+    assert_eq!(vector.get(4), Some(30));
+
+    // Test für nicht vorhandene Elemente
+    assert_eq!(vector.get(1), None);
+    assert_eq!(vector.get(3), None);
+}
+
+#[test]
+fn test_sparse_vector_equality_f64() {
+    let vec1 = SparseVector::from(vec![1.0, 0.0, 3.0]);
+    let vec2 = SparseVector::from(vec![1.0, 0.0, 3.0]);
+    let vec3 = SparseVector::from(vec![1.0, 2.0, 3.0]);
+
+    assert_eq!(vec1, vec2);
+    assert_ne!(vec1, vec3);
+}
+
+#[test]
+fn test_sparse_vector_equality_i32() {
+    let vec1 = SparseVector::from(vec![1, 0, 3]);
+    let vec2 = SparseVector::from(vec![1, 0, 3]);
+    let vec3 = SparseVector::from(vec![1, 2, 3]);
+
+    assert_eq!(vec1, vec2);
+    assert_ne!(vec1, vec3);
+}
+
+#[test]
+fn test_sparse_vector_equality_empty() {
+    let vec1: SparseVector<f64> = SparseVector::from(vec![]);
+    let vec2: SparseVector<f64> = SparseVector::from(vec![]);
+
+    assert_eq!(vec1, vec2);
+}
+
+#[test]
+fn test_sparse_vector_equality_different_lengths() {
+    let vec1 = SparseVector::from(vec![1.0, 0.0, 3.0]);
+    let vec2 = SparseVector::from(vec![1.0, 0.0]);
+
+    assert_ne!(vec1, vec2);
+}

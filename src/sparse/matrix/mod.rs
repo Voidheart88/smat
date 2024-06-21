@@ -240,7 +240,7 @@ where
     }
 
     /// Sets the value at the specified row and column
-    fn set(&mut self, row: usize, col: usize, value: T) {
+    pub fn set(&mut self, row: usize, col: usize, value: T) {
         for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
             if self.row_idx[idx as usize] == row {
                 self.values[idx as usize] = value;
