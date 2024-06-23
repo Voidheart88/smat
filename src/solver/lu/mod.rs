@@ -46,10 +46,12 @@ where
 
     for pivot in 0..dimension {
         for row in pivot + 1..dimension {
-            let multiplier = upper_matrix.get(row, pivot).unwrap_or(T::default()) / upper_matrix.get(pivot, pivot).unwrap_or(T::default());
+            let multiplier = upper_matrix.get(row, pivot).unwrap_or(T::default())
+                / upper_matrix.get(pivot, pivot).unwrap_or(T::default());
             lower_matrix.set(row, pivot, multiplier);
             for column in pivot..dimension {
-                let new_value = upper_matrix.get(row, column).unwrap_or(T::default()) - multiplier * upper_matrix.get(pivot, column).unwrap_or(T::default());
+                let new_value = upper_matrix.get(row, column).unwrap_or(T::default())
+                    - multiplier * upper_matrix.get(pivot, column).unwrap_or(T::default());
                 upper_matrix.set(row, column, new_value);
             }
         }
@@ -58,7 +60,10 @@ where
     (lower_matrix, upper_matrix)
 }
 
-fn forward_substitution<T>(lower_matrix: &SparseMatrix<T>, vector: &SparseVector<T>) -> SparseVector<T>
+fn forward_substitution<T>(
+    lower_matrix: &SparseMatrix<T>,
+    vector: &SparseVector<T>,
+) -> SparseVector<T>
 where
     T: Copy
         + Default
@@ -81,7 +86,10 @@ where
     SparseVector::from(y_vector)
 }
 
-fn backward_substitution<T>(upper_matrix: &SparseMatrix<T>, y_vector: &SparseVector<T>) -> SparseVector<T>
+fn backward_substitution<T>(
+    upper_matrix: &SparseMatrix<T>,
+    y_vector: &SparseVector<T>,
+) -> SparseVector<T>
 where
     T: Copy
         + Default
