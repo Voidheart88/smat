@@ -50,3 +50,4 @@ fn test_dense2() {
     let mut sym: Symbolic<i64> = (&mat).into();
     assert!(sym.is_dense())
 }
+

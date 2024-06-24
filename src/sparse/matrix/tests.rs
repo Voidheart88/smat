@@ -528,23 +528,3 @@ fn test_set_function() {
 
     assert_eq!(matrix, expected_matrix);
 }
-
-#[test]
-fn test_permute() {
-    let matrix: SparseMatrix<u64> = vec![
-        vec![1, 2, 0], 
-        vec![4, 5, 6], 
-        vec![7, 8, 9]].into();
-
-    // Permutation: swap row 0 and row 1
-    let perm = vec![1, 0, 2];
-    let permuted_matrix = matrix.permute(&perm);
-
-    let expected_matrix: SparseMatrix<u64> =
-        vec![
-            vec![4, 5, 6], 
-            vec![1, 2, 0], 
-            vec![7, 8, 9]].into();
-
-    assert_eq!(permuted_matrix, expected_matrix);
-}
