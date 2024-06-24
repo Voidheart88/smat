@@ -528,3 +528,26 @@ fn test_set_function() {
 
     assert_eq!(matrix, expected_matrix);
 }
+
+#[test]
+fn test_lower_triangular() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]].into();
+
+    let expected: SparseMatrix<i64> = vec![vec![1, 0, 0], vec![4, 1, 0], vec![7, 8, 1]].into();
+
+    let result = mat.lower_triangular();
+
+    print!("{result:?}");
+
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_upper_triangular() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]].into();
+
+    let expected: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![0, 5, 6], vec![0, 0, 9]].into();
+
+    let result = mat.upper_triangular();
+    assert_eq!(result, expected);
+}

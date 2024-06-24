@@ -1,5 +1,7 @@
 mod graph;
 
+use num::One;
+
 use crate::SparseMatrix;
 
 /// Symbolic analysis for sparse matrices
@@ -31,6 +33,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>

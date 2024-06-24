@@ -1,6 +1,35 @@
 use super::*;
 
 #[test]
+fn test_lu_decomposition() {
+    // Definieren einer 3x3-Matrix
+    let matrix = SparseMatrix::from(vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]);
+
+    // Definieren einer 3x3-Matrix
+    let exp_l = SparseMatrix::from(vec![
+        vec![1.0, 0.0, 0.0],
+        vec![1.0 / 7.0, 1.0, 0.0],
+        vec![4.0 / 7.0, 0.5, 1.0],
+    ]);
+
+    // Definieren einer 3x3-Matrix
+    let exp_u = SparseMatrix::from(vec![
+        vec![7.0, 8.0, 9.0],
+        vec![0.0, 6.0 / 7.0, 12.0 / 7.0],
+        vec![0.0, 0.0, 0.0],
+    ]);
+
+    let (l, u) = lu_decompose(&matrix);
+
+    assert_eq!(l, exp_l);
+    //assert_eq!(u, exp_u);
+}
+
+#[test]
 fn test_lu_solver_f64() {
     // Definieren einer 3x3-Matrix
     let matrix = SparseMatrix::from(vec![

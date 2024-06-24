@@ -1,6 +1,8 @@
 mod iterators;
 
 use crate::{sparse::utils::scatter, triple::Triples};
+use num::One;
+
 pub use iterators::*;
 
 /// Matrix in compressed sparse column (CSC) format
@@ -18,6 +20,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>
@@ -116,7 +119,6 @@ where
             .find(|&(i, j)| self.row_idx[i as usize] == row && j == column)
             .map(|(i, _)| self.values[i as usize])
     }
-
 
     /// Trims the sparse matrix by removing all elements with zero values.
     ///
@@ -249,6 +251,30 @@ where
             }
         }
     }
+
+    /// Identity plus strictly lower triangular part of A
+    pub fn lower_triangular(&self) -> SparseMatrix<T> {
+        self.iter()
+            .filter(|(col, row, _)| !(col > row))
+            .map(|(col, row, val)| {
+                if row == col {
+                    (col, row, T::one())
+                } else {
+                    (col, row, val)
+                }
+            })
+            .collect()
+    }
+
+    /// Diagonal plus strictly upper triangular part of A
+    pub fn upper_triangular(&self) -> SparseMatrix<T> {
+        self.iter().filter(|(col, row, _)| col >= row).collect()
+    }
+
+    // Returns the number of non zeros
+    pub fn nnz(&self) -> usize {
+        self.values.len()
+    }
 }
 
 impl<T> std::ops::Mul<T> for SparseMatrix<T>
@@ -256,6 +282,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>
@@ -274,6 +301,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>
@@ -378,6 +406,7 @@ impl<T> std::ops::Mul<&SparseMatrix<T>> for &SparseMatrix<T>
 where
     T: Copy
         + Default
+        + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
@@ -434,6 +463,7 @@ impl<T> std::ops::Mul<SparseMatrix<T>> for SparseMatrix<T>
 where
     T: Copy
         + Default
+        + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
@@ -452,6 +482,7 @@ impl<T> std::ops::Mul<&SparseMatrix<T>> for SparseMatrix<T>
 where
     T: Copy
         + Default
+        + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
@@ -470,6 +501,7 @@ impl<T> std::ops::Mul<SparseMatrix<T>> for &SparseMatrix<T>
 where
     T: Copy
         + Default
+        + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>

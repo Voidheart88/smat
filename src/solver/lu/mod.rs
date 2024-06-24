@@ -1,3 +1,5 @@
+use num::One;
+
 use crate::{SparseMatrix, SparseVector};
 
 use super::Solver;
@@ -12,6 +14,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>
@@ -35,13 +38,51 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Div<Output = T>
         + std::ops::Mul<Output = T>,
 {
-    let lower_matrix = SparseMatrix::default();
-    let upper_matrix = SparseMatrix::default();
+    let mut lower_matrix = matrix.lower_triangular();
+    let mut upper_matrix = matrix.upper_triangular();
+
+    let n = matrix.nrows();
+
+    for k in 0..n {
+        for i in k + 1..n {
+            if let Some(lik) = lower_matrix.get(i, k) {
+                if lik != T::default() {
+                    let u_kk = upper_matrix.get(k, k).unwrap_or(T::default());
+                    lower_matrix.set(i, k, lik / u_kk);
+
+                    for j in k..n {
+                        if let Some(u_kj) = upper_matrix.get(k, j) {
+                            if u_kj != T::default() {
+                                let u_ij = upper_matrix.get(i, j).unwrap_or(T::default());
+                                let l_ik = lower_matrix.get(i, k).unwrap_or(T::default());
+                                upper_matrix.set(i, j, u_ij - l_ik * u_kj);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for j in k + 1..n {
+            if let Some(ukj) = upper_matrix.get(k, j) {
+                if ukj != T::default() {
+                    for i in j..n {
+                        if let Some(l_ij) = lower_matrix.get(i, j) {
+                            if l_ij != T::default() {
+                                let l_ik = lower_matrix.get(i, k).unwrap_or(T::default());
+                                lower_matrix.set(i, j, l_ij - l_ik * ukj);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     (lower_matrix, upper_matrix)
 }
@@ -54,6 +95,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Div<Output = T>
@@ -80,6 +122,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>

@@ -1,5 +1,7 @@
 use std::ops::Mul;
 
+use num::One;
+
 use super::matrix::SparseMatrix;
 
 pub(crate) fn scatter<T>(
@@ -17,6 +19,7 @@ where
         + Default
         + Mul<Output = T>
         + PartialEq
+        + One
         + std::ops::AddAssign
         + std::ops::Div<Output = T>
         + std::ops::Add<Output = T>
