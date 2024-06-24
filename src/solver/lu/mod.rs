@@ -40,22 +40,8 @@ where
         + std::ops::Div<Output = T>
         + std::ops::Mul<Output = T>,
 {
-    let dimension = matrix.nrows();
-    let mut lower_matrix = SparseMatrix::eye(T::default(), dimension); // initialize lower_matrix as the identity matrix
-    let mut upper_matrix = matrix.clone();
-
-    for pivot in 0..dimension {
-        for row in pivot + 1..dimension {
-            let multiplier = upper_matrix.get(row, pivot).unwrap_or(T::default())
-                / upper_matrix.get(pivot, pivot).unwrap_or(T::default());
-            lower_matrix.set(row, pivot, multiplier);
-            for column in pivot..dimension {
-                let new_value = upper_matrix.get(row, column).unwrap_or(T::default())
-                    - multiplier * upper_matrix.get(pivot, column).unwrap_or(T::default());
-                upper_matrix.set(row, column, new_value);
-            }
-        }
-    }
+    let lower_matrix = SparseMatrix::default();
+    let upper_matrix = SparseMatrix::default();
 
     (lower_matrix, upper_matrix)
 }

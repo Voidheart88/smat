@@ -1,3 +1,5 @@
+mod graph;
+
 use crate::SparseMatrix;
 
 /// Symbolic analysis for sparse matrices
@@ -113,7 +115,6 @@ impl<'a, T> From<&'a SparseMatrix<T>> for Symbolic<'a, T> {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests;

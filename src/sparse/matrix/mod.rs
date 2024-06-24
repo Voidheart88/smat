@@ -117,6 +117,58 @@ where
             .map(|(i, _)| self.values[i as usize])
     }
 
+    pub fn permute(&self, row_perm: &[usize], col_perm: &[usize]) -> SparseMatrix<T> {
+        assert_eq!(row_perm.len(), self.nrows, "Row permutation vector length must match number of rows");
+        assert_eq!(col_perm.len(), self.ncols, "Column permutation vector length must match number of columns");
+
+        let mut new_col_ptr = vec![0; self.ncols + 1];
+        let mut new_row_idx = Vec::with_capacity(self.row_idx.len());
+        let mut new_values = Vec::with_capacity(self.values.len());
+
+        // Create a mapping from old row indices to new row indices based on the row permutation vector
+        let mut row_perm_map = vec![0; self.nrows];
+        for (new_idx, &old_idx) in row_perm.iter().enumerate() {
+            row_perm_map[old_idx] = new_idx;
+        }
+
+        // Create a mapping from old column indices to new column indices based on the column permutation vector
+        let mut col_perm_map = vec![0; self.ncols];
+        for (new_idx, &old_idx) in col_perm.iter().enumerate() {
+            col_perm_map[old_idx] = new_idx;
+        }
+
+        // Build the new column pointers, new row indices, and new values based on the permutations
+        let mut entries: Vec<(usize, usize, T)> = Vec::new();
+        for col in 0..self.ncols {
+            for idx in self.col_ptr[col] as usize..self.col_ptr[col + 1] as usize {
+                let old_row = self.row_idx[idx];
+                let new_row = row_perm_map[old_row];
+                let new_col = col_perm_map[col];
+                entries.push((new_col, new_row, self.values[idx]));
+            }
+        }
+
+        entries.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1))); // Sort by (col, row)
+
+        for &(new_col, new_row, value) in &entries {
+            while new_col >= new_col_ptr.len() - 1 {
+                new_col_ptr.push(new_row_idx.len() as isize);
+            }
+            new_row_idx.push(new_row);
+            new_values.push(value);
+        }
+        let len = new_col_ptr.len();
+        new_col_ptr[len - 1] = new_row_idx.len() as isize;
+
+        SparseMatrix {
+            nrows: self.nrows,
+            ncols: self.ncols,
+            col_ptr: new_col_ptr,
+            row_idx: new_row_idx,
+            values: new_values,
+        }
+    }
+
     /// Trims the sparse matrix by removing all elements with zero values.
     ///
     /// This method performs the following steps:

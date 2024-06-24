@@ -354,6 +354,20 @@ fn test_sparse_iter() {
 }
 
 #[test]
+fn test_sparse_lower_triangular_iter() {
+    let matrix: SparseMatrix<u64> = vec![vec![1, 4, 7], vec![2, 5, 8], vec![3, 6, 9]].into();
+
+    let mut iter = LowerTriangularSparseIter::new(&matrix);
+    assert_eq!(iter.next(), Some((0, 0, 1)));
+    assert_eq!(iter.next(), Some((0, 1, 2)));
+    assert_eq!(iter.next(), Some((0, 2, 3)));
+    assert_eq!(iter.next(), Some((1, 1, 5)));
+    assert_eq!(iter.next(), Some((1, 2, 6)));
+    assert_eq!(iter.next(), Some((2, 2, 9)));
+    assert_eq!(iter.next(), None);
+}
+
+#[test]
 fn test_sparse_iter_complex() {
     let matrix: SparseMatrix<Complex<f64>> = vec![
         vec![
@@ -429,6 +443,30 @@ fn test_from_iter_identity() {
 }
 
 #[test]
+fn test_from_lower_triangular_iter_identity() {
+    let matrix: SparseMatrix<u64> = vec![vec![1, 4, 7], vec![2, 5, 8], vec![3, 6, 9]].into();
+
+    let exp: SparseMatrix<u64> = vec![vec![1, 0, 0], vec![2, 5, 0], vec![3, 6, 9]].into();
+
+    let iter = LowerTriangularSparseIter::new(&matrix);
+    let result_matrix: SparseMatrix<u64> = iter.collect();
+
+    assert_eq!(result_matrix, exp);
+}
+
+#[test]
+fn test_from_upper_triangular_iter_identity() {
+    let matrix: SparseMatrix<u64> = vec![vec![1, 4, 7], vec![2, 5, 8], vec![3, 6, 9]].into();
+
+    let exp: SparseMatrix<u64> = vec![vec![0, 4, 7], vec![0, 0, 8], vec![0, 0, 0]].into();
+
+    let iter = UpperTriangularSparseIter::new(&matrix);
+    let result_matrix: SparseMatrix<u64> = iter.collect();
+
+    assert_eq!(result_matrix, exp);
+}
+
+#[test]
 fn test_transpose() {
     let matrix: SparseMatrix<f64> = vec![
         vec![1.0, 2.0, 3.0],
@@ -489,4 +527,24 @@ fn test_set_function() {
     matrix.set(2, 2, 50.0);
 
     assert_eq!(matrix, expected_matrix);
+}
+
+#[test]
+fn test_permute() {
+    let matrix: SparseMatrix<u64> = vec![
+        vec![1, 2, 0], 
+        vec![4, 5, 6], 
+        vec![7, 8, 9]].into();
+
+    // Permutation: swap row 0 and row 1
+    let perm = vec![1, 0, 2];
+    let permuted_matrix = matrix.permute(&perm);
+
+    let expected_matrix: SparseMatrix<u64> =
+        vec![
+            vec![4, 5, 6], 
+            vec![1, 2, 0], 
+            vec![7, 8, 9]].into();
+
+    assert_eq!(permuted_matrix, expected_matrix);
 }
