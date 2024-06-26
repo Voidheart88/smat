@@ -142,5 +142,36 @@ where
     SparseVector::from(x_vector)
 }
 
+/// Solves Ly = b
+fn l_solve<T>(mat_l: SparseMatrix<T>, vec_y: &mut Vec<T> )
+where
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
+{
+    for idx in 0..mat_l.nnz() {
+
+    }
+    todo!()
+}
+
+/// Solves Ux = y
+fn u_solve<T>() -> Vec<T>
+where
+    T: Copy
+        + Default
+        + PartialEq
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
+{
+    todo!()
+}
+
 #[cfg(test)]
 mod tests;
