@@ -1,5 +1,6 @@
 mod iterators;
 
+use super::SparseError;
 use crate::{sparse::utils::scatter, triple::Triples};
 use num::One;
 
@@ -272,9 +273,31 @@ where
         self.iter().filter(|(col, row, _)| col >= row).collect()
     }
 
-    // Returns the number of non zeros
-    pub fn nnz(&self) -> usize {
+    // -----------------------------Length Operators----------------------------
+    /// Returns the number of non zeros
+    pub fn non_zeros(&self) -> usize {
         self.values.len()
+    }
+
+    /// Returns the number of non-zero column slices
+    pub fn nz_columns(&self) -> usize {
+        self.col_ptr.windows(2).filter(|w| w[0] != w[1]).count()
+    }
+
+    /// Returns the number of non-zero elements in a given column
+    pub fn nz_rows(&self, col: usize) -> Result<isize, SparseError> {
+        if col >= self.ncols {
+            return Err(SparseError::ColumnOutOfBounds);
+        }
+        Ok(self.col_ptr[col + 1] - self.col_ptr[col])
+    }
+
+    /// Returns the number of non-zero elements in a given column
+    pub fn nz_rows_unchecked(&self, col: usize) -> isize {
+        if col >= self.ncols {
+            panic!("Column out of bounds")
+        }
+        self.col_ptr[col + 1] - self.col_ptr[col]
     }
 }
 

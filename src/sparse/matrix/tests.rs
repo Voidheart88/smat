@@ -145,19 +145,14 @@ fn test_from_dense() {
 
 #[test]
 fn test_from_dense2() {
-    let sparse: SparseMatrix<i64> = vec![
-        vec![1, 2, 3],
-        vec![0, 5, 6],
-        vec![0, 0, 9],
-    ]
-    .into();
+    let sparse: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![0, 5, 6], vec![0, 0, 9]].into();
 
     let expected_sparse = SparseMatrix {
         nrows: 3,
         ncols: 3,
         col_ptr: vec![0, 1, 3, 6],
-        row_idx: vec![0, 0, 1, 0,1,2],
-        values:  vec![1, 2, 5, 3, 6, 9]
+        row_idx: vec![0, 0, 1, 0, 1, 2],
+        values: vec![1, 2, 5, 3, 6, 9],
     };
 
     assert_eq!(sparse, expected_sparse);
@@ -570,4 +565,84 @@ fn test_upper_triangular() {
 
     let result = mat.upper_triangular();
     assert_eq!(result, expected);
+}
+
+#[test]
+fn test_non_zeros() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]].into();
+
+    let expected = 9;
+    assert_eq!(mat.non_zeros(), expected);
+}
+
+#[test]
+fn test_non_zeros2() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 2, 0], vec![4, 0, 6], vec![0, 8, 9]].into();
+
+    let expected = 6;
+    assert_eq!(mat.non_zeros(), expected);
+}
+
+#[test]
+fn test_nz_cols() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 2, 0], vec![4, 0, 6], vec![0, 8, 9]].into();
+
+    let expected = 3;
+    assert_eq!(mat.nz_columns(), expected);
+}
+
+#[test]
+fn test_nz_cols2() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 0, 0], vec![4, 0, 6], vec![0, 0, 9]].into();
+
+    let expected = 2;
+
+    println!("{mat:?}");
+    assert_eq!(mat.nz_columns(), expected);
+}
+
+#[test]
+fn test_nz_cols3() {
+    let mat: SparseMatrix<i64> = vec![vec![0, 0, 0], vec![0, 0, 0], vec![0, 0, 0]].into();
+
+    let expected = 0;
+
+    println!("{mat:?}");
+    assert_eq!(mat.nz_columns(), expected);
+}
+
+#[test]
+fn test_nz_rows() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 4, 6], vec![2, 5, 0], vec![3, 0, 0]].into();
+
+    let expected = 3;
+    assert_eq!(mat.nz_rows(0).unwrap(), expected);
+    let expected = 2;
+    assert_eq!(mat.nz_rows(1).unwrap(), expected);
+    let expected = 1;
+    assert_eq!(mat.nz_rows(2).unwrap(), expected);
+}
+
+#[test]
+fn test_nz_rows2() {
+    let mat: SparseMatrix<i64> = vec![vec![0, 0, 0], vec![0, 0, 0], vec![0, 0, 0]].into();
+
+    let expected = 0;
+    assert_eq!(mat.nz_rows(0).unwrap(), expected);
+    let expected = 0;
+    assert_eq!(mat.nz_rows(1).unwrap(), expected);
+    let expected = 0;
+    assert_eq!(mat.nz_rows(2).unwrap(), expected);
+}
+
+#[test]
+fn test_nz_rows3() {
+    let mat: SparseMatrix<i64> = vec![vec![1, 0, 0], vec![0, 2, 0], vec![0, 0, 3]].into();
+
+    let expected = 1;
+    assert_eq!(mat.nz_rows(0).unwrap(), expected);
+    let expected = 1;
+    assert_eq!(mat.nz_rows(1).unwrap(), expected);
+    let expected = 1;
+    assert_eq!(mat.nz_rows(2).unwrap(), expected);
 }
