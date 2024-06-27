@@ -142,19 +142,23 @@ where
     SparseVector::from(x_vector)
 }
 
-/// Solves Ly = b
+/// Solves Ly = b by forward substitution
 fn l_solve<T>(mat_l: SparseMatrix<T>, vec_y: &mut Vec<T> )
 where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>
         + std::ops::Div<Output = T>,
 {
-    for idx in 0..mat_l.nnz() {
-
+    for idx in 0..vec_y.len() {
+        vec_y[idx] = vec_y[idx]/mat_l.get(idx, idx).unwrap();
+        for idy in (idx+1)..mat_l.nnz() {
+            
+        }
     }
     todo!()
 }
@@ -165,6 +169,7 @@ where
     T: Copy
         + Default
         + PartialEq
+        + One
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>

@@ -111,13 +111,14 @@ where
 
     /// Get a Value
     pub fn get(&self, row: usize, column: usize) -> Option<T> {
-        self.col_ptr
-            .iter()
-            .zip(self.col_ptr.iter().skip(1))
-            .enumerate()
-            .flat_map(|(j, (&start, &end))| (start..end).map(move |i| (i, j)))
-            .find(|&(i, j)| self.row_idx[i as usize] == row && j == column)
-            .map(|(i, _)| self.values[i as usize])
+        let col_start = self.col_ptr[column] as usize;
+        let col_end = self.col_ptr[column + 1] as usize;
+        let row_slice = &self.row_idx[col_start..col_end];
+        let val_idx = row_slice.iter().find(|val| **val == row);
+        match val_idx {
+            Some(idx) => Some(self.values[*idx]),
+            None => None,
+        }
     }
 
     /// Trims the sparse matrix by removing all elements with zero values.

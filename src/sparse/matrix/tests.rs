@@ -144,6 +144,26 @@ fn test_from_dense() {
 }
 
 #[test]
+fn test_from_dense2() {
+    let sparse: SparseMatrix<i64> = vec![
+        vec![1, 2, 3],
+        vec![0, 5, 6],
+        vec![0, 0, 9],
+    ]
+    .into();
+
+    let expected_sparse = SparseMatrix {
+        nrows: 3,
+        ncols: 3,
+        col_ptr: vec![0, 1, 3, 6],
+        row_idx: vec![0, 0, 1, 0,1,2],
+        values:  vec![1, 2, 5, 3, 6, 9]
+    };
+
+    assert_eq!(sparse, expected_sparse);
+}
+
+#[test]
 fn test_from_triples() {
     let triples = Triples::new(
         3,
