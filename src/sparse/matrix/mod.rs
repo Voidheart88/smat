@@ -122,6 +122,16 @@ where
         }
     }
 
+    /// Sets the value at the specified row and column
+    pub fn set(&mut self, row: usize, col: usize, value: T) {
+        for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
+            if self.row_idx[idx as usize] == row {
+                self.values[idx as usize] = value;
+                return;
+            }
+        }
+    }
+
     /// Trims the sparse matrix by removing all elements with zero values.
     ///
     /// This method performs the following steps:
@@ -244,19 +254,9 @@ where
         }
     }
 
-    /// Sets the value at the specified row and column
-    pub fn set(&mut self, row: usize, col: usize, value: T) {
-        for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
-            if self.row_idx[idx as usize] == row {
-                self.values[idx as usize] = value;
-                return;
-            }
-        }
-    }
-
     /// Identity plus strictly lower triangular part of A
     pub fn lower_triangular(&self) -> SparseMatrix<T> {
-        self.iter()
+        let mat = self.iter()
             .filter(|(col, row, _)| !(col > row))
             .map(|(col, row, val)| {
                 if row == col {
@@ -265,7 +265,9 @@ where
                     (col, row, val)
                 }
             })
-            .collect()
+            .collect();
+
+        mat
     }
 
     /// Diagonal plus strictly upper triangular part of A
