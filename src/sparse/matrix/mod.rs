@@ -256,7 +256,8 @@ where
 
     /// Identity plus strictly lower triangular part of A
     pub fn lower_triangular(&self) -> SparseMatrix<T> {
-        let mat = self.iter()
+        let mat = self
+            .iter()
             .filter(|(col, row, _)| !(col > row))
             .map(|(col, row, val)| {
                 if row == col {

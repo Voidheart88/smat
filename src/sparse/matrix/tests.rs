@@ -370,11 +370,7 @@ fn test_sparse_iter() {
 
 #[test]
 fn test_sparse_lower_triangular_iter() {
-    let matrix: SparseMatrix<u64> = vec![
-        vec![1, 4, 7], 
-        vec![2, 5, 8], 
-        vec![3, 6, 9]
-    ].into();
+    let matrix: SparseMatrix<u64> = vec![vec![1, 4, 7], vec![2, 5, 8], vec![3, 6, 9]].into();
 
     let mut iter = LowerTriangularSparseIter::new(&matrix);
     assert_eq!(iter.next(), Some((0, 0, 1)));
@@ -384,7 +380,6 @@ fn test_sparse_lower_triangular_iter() {
     assert_eq!(iter.next(), Some((1, 2, 6)));
     assert_eq!(iter.next(), Some((2, 2, 9)));
     assert_eq!(iter.next(), None);
-
 }
 
 #[test]

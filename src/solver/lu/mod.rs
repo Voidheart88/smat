@@ -39,9 +39,22 @@ where
         }
     }
 
+    // Todo
     fn decompose(&mut self) {
         self.upper = self.matrix.upper_triangular();
         self.lower = self.matrix.lower_triangular();
+
+        for col in 0..self.matrix.nz_columns()-1 {
+            // Update Upper row
+            for idi in 0..0 {
+
+            }
+
+            // Update Lower col
+            for idj in 0..0 {
+
+            }
+        }
     }
 
     /// solve Ly = b
@@ -60,7 +73,7 @@ where
         }
     }
 
-    /// solve Ux = y
+    /// solve Ub = x
     /// The Algorithm assumes no empty columns and U is a upper triangular matrix
     fn backward_substitution(&mut self)
     where
@@ -98,7 +111,6 @@ where
         + std::ops::Sub<Output = T>
         + std::ops::Mul<Output = T>
         + std::ops::Div<Output = T>
-        + std::fmt::Debug,
 {
     fn solve(&mut self) -> &Vec<T> {
         self.decompose();
