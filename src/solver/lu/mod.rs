@@ -44,10 +44,11 @@ where
         self.upper = self.matrix.upper_triangular();
         self.lower = self.matrix.lower_triangular();
 
-        for col in 0..self.matrix.nz_columns()-1 {
+        for idx_k in 0..self.matrix.nrows() {
             // Update Upper row
-            for idi in 0..0 {
-
+            for idx_i in (idx_k+1)..self.matrix.nrows() {
+                let lik = self.lower.get(idx_i, idx_k).unwrap();
+                println!("k:{idx_k}, i:{idx_i}")
             }
 
             // Update Lower col
