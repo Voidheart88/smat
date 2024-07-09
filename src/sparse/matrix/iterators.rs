@@ -1,3 +1,4 @@
+/// A collection of iterators for sparse matrices
 use super::*;
 
 /// An Iterator over the values in a Sparse Matrix
@@ -130,6 +131,37 @@ where
         }
 
         None
+    }
+}
+
+/// An Iterator returning the pivots
+pub struct SparsePivotIter<'a, T> {
+    matrix: &'a SparseMatrix<T>,
+    pivot: usize
+}
+
+impl<'a, T> SparsePivotIter<'a, T> {
+    pub fn new(matrix: &'a SparseMatrix<T>) -> Self {
+        SparsePivotIter {
+            matrix,
+            pivot: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for SparsePivotIter<'a, T>
+where
+    T: Copy + Default,
+{
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pivot >= self.matrix.ncols || self.pivot >= self.matrix.nrows {
+            return None
+        }
+        let pivot =  self.pivot;
+        self.pivot += 1;
+        Some(pivot)
     }
 }
 

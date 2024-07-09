@@ -17,6 +17,7 @@ impl<'a, 'b, T> LUSolver<'a, 'b, T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::Add<Output = T>
@@ -43,17 +44,33 @@ where
     fn decompose(&mut self) {
         self.upper = self.matrix.upper_triangular();
         self.lower = self.matrix.lower_triangular();
+        let ncols = self.matrix.ncols();
+        let nrows = self.matrix.nrows();
 
-        for idx_k in 0..self.matrix.nrows() {
-            // Update Upper row
-            for idx_i in (idx_k+1)..self.matrix.nrows() {
-                let lik = self.lower.get(idx_i, idx_k).unwrap();
-                println!("k:{idx_k}, i:{idx_i}")
+        for idx_k in 0..nrows {
+            // Set diagonal of U to the original matrix's diagonal value
+            let diag_value = self.matrix.get_unchecked(idx_k, idx_k);
+            self.upper.set(idx_k, idx_k, diag_value);
+
+            // Update upper row
+            for idx_i in (idx_k + 1)..nrows {
+                let lik = self.matrix.get_unchecked(idx_i, idx_k) / self.upper.get_unchecked(idx_k, idx_k);
+                self.lower.set(idx_i, idx_k, lik);
+                for idx in idx_k..ncols {
+                    let uii = self.upper.get_unchecked(idx_i, idx);
+                    let uki = self.upper.get_unchecked(idx_k, idx);
+                    self.upper.set(idx_i, idx, uii - uki * lik);
+                }
             }
 
-            // Update Lower col
-            for idj in 0..0 {
-
+            // Update lower col
+            for idx_j in (idx_k + 1)..nrows {
+                let ukj = self.upper.get_unchecked(idx_k, idx_j);
+                for idx in idx_j..nrows {
+                    let ljj = self.lower.get_unchecked(idx, idx_j);
+                    let ljk = self.lower.get_unchecked(idx, idx_k);
+                    self.lower.set(idx, idx_j, ljj - ljk * ukj);
+                }
             }
         }
     }
@@ -106,6 +123,7 @@ impl<'a, 'b, T> Solver<T> for LUSolver<'a, 'b, T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::Add<Output = T>

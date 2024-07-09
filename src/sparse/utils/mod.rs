@@ -1,5 +1,3 @@
-use std::ops::Mul;
-
 use num::One;
 
 use super::matrix::SparseMatrix;
@@ -17,10 +15,11 @@ pub(crate) fn scatter<T>(
 where
     T: Copy
         + Default
-        + Mul<Output = T>
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::AddAssign
+        + std::ops::Mul<Output = T>
         + std::ops::Div<Output = T>
         + std::ops::Add<Output = T>
         + std::ops::Sub<Output = T>,

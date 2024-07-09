@@ -83,6 +83,7 @@ impl<'a, T> From<&'a SparseMatrix<T>> for AdjGraph
 where
     T: PartialEq
         + Default
+        + std::fmt::Debug
         + Copy
         + One
         + std::ops::Add<Output = T>

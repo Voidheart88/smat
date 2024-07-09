@@ -32,6 +32,7 @@ impl<'a, T> Symbolic<'a, T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::AddAssign

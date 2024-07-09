@@ -68,6 +68,31 @@ fn test_get_value() {
 }
 
 #[test]
+fn test_get_value_unchecked() {
+    let sparse: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 0.0],
+        vec![0.0, 2.0, 0.0],
+        vec![0.0, 3.0, 4.0],
+    ]
+    .into();
+
+    assert_eq!(sparse.get_unchecked(0, 0), 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_get_value_unchecked2() {
+    let sparse: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 0.0],
+        vec![0.0, 2.0, 0.0],
+        vec![0.0, 3.0, 4.0],
+    ]
+    .into();
+
+    sparse.get_unchecked(0, 1);
+}
+
+#[test]
 fn test_trim() {
     let mut sparse = SparseMatrix {
         nrows: 3,
@@ -409,6 +434,22 @@ fn test_sparse_iter_complex() {
     assert_eq!(iter.next(), Some((2, 2, Complex::new(3.0, 3.0))));
     assert_eq!(iter.next(), None);
 }
+
+#[test]
+fn test_sparse_pivot_iter() {
+    let matrix: SparseMatrix<u64> = vec![
+        vec![1, 4, 7], 
+        vec![2, 5, 8], 
+        vec![3, 6, 9]
+    ].into();
+
+    let mut iter = SparsePivotIter::new(&matrix);
+    assert_eq!(iter.next(), Some(0));
+    assert_eq!(iter.next(), Some(1));
+    assert_eq!(iter.next(), Some(2));
+    assert_eq!(iter.next(), None);
+}
+
 
 #[test]
 fn test_from_iterator_complex() {

@@ -20,6 +20,7 @@ impl<T> SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::Add<Output = T>
@@ -122,6 +123,18 @@ where
         }
     }
 
+    /// Get a Value -> panics if the value does not exist
+    pub fn get_unchecked(&self, row: usize, column: usize) -> T {
+        let col_start = self.col_ptr[column] as usize;
+        let col_end = self.col_ptr[column + 1] as usize;
+        let row_slice = &self.row_idx[col_start..col_end];
+        let val_idx = row_slice.iter().find(|val| **val == row);
+        match val_idx {
+            Some(idx) => self.values[*idx],
+            None => panic!("Value not present in Matrix at {row} {column}"),
+        }
+    }
+
     /// Sets the value at the specified row and column
     pub fn set(&mut self, row: usize, col: usize, value: T) {
         for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
@@ -178,10 +191,6 @@ where
 
     /// Returns an iterator over the columns of the sparse matrix.
     ///
-    /// The iterator yields `Option<SparseRowIter>`, where each `SparseRowIter` iterates
-    /// over the non-zero elements in the corresponding column. If a column has no
-    /// non-zero elements, `None` is returned for that column.
-    ///
     /// # Returns
     ///
     /// A `SparseColIter` iterator that can be used to traverse the matrix column by column.
@@ -192,7 +201,22 @@ where
         SparseIter::new(self)
     }
 
+    /// Returns an iterator returning the pivot elements.
+    ///
+    /// The iterator yields `Option<usize>`
+    ///
+    /// # Returns
+    ///
+    /// A `SparsePivotIter` iterator that can be used to traverse the matrix column by column.
+    ///
+    /// This method is useful for iterating over the elements of the sparse matrix
+    /// in a column-major order.
+    pub fn pivots(&self) -> SparsePivotIter<T> {
+        SparsePivotIter::new(self)
+    }
+
     /// Scales the Matrix by a constant factor
+    /// The Factor must be the type of T
     fn scale(&mut self, factor: T) {
         for value in &mut self.values {
             *value = *value * factor;
@@ -308,6 +332,7 @@ impl<T> std::ops::Mul<T> for SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::Add<Output = T>
@@ -327,6 +352,7 @@ impl<T> std::ops::Mul<&T> for SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + PartialEq
         + One
         + std::ops::Add<Output = T>
@@ -433,6 +459,7 @@ impl<T> std::ops::Mul<&SparseMatrix<T>> for &SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
@@ -490,6 +517,7 @@ impl<T> std::ops::Mul<SparseMatrix<T>> for SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
@@ -509,6 +537,7 @@ impl<T> std::ops::Mul<&SparseMatrix<T>> for SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>
@@ -528,6 +557,7 @@ impl<T> std::ops::Mul<SparseMatrix<T>> for &SparseMatrix<T>
 where
     T: Copy
         + Default
+        + std::fmt::Debug
         + One
         + std::ops::AddAssign
         + std::ops::Add<Output = T>

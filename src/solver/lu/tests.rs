@@ -30,6 +30,23 @@ fn test_lu_decomposition() {
 }
 
 #[test]
+fn test_lu_decomposition_with_unity() {
+    let matrix = SparseMatrix::from(vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ]);
+
+    let vector = vec![0.0; matrix.ncols()];
+
+    let mut solver = LUSolver::new(&matrix, &vector);
+    solver.decompose();
+    let solution = solver.lower*solver.upper;
+
+    assert_eq!(matrix, solution);
+}
+
+#[test]
 fn test_lu_solver_f64() {
     let matrix = SparseMatrix::from(vec![
         vec![1.0, 0.0, 0.0],
