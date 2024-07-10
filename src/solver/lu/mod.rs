@@ -42,34 +42,53 @@ where
 
     // Todo
     fn decompose(&mut self) {
-        self.upper = self.matrix.upper_triangular();
+        self.upper = self.matrix.clone();
         self.lower = self.matrix.lower_triangular();
         let ncols = self.matrix.ncols();
         let nrows = self.matrix.nrows();
 
-        for idx_k in 0..nrows {
-            // Set diagonal of U to the original matrix's diagonal value
-            let diag_value = self.matrix.get_unchecked(idx_k, idx_k);
-            self.upper.set(idx_k, idx_k, diag_value);
-
-            // Update upper row
+        /*for idx_k in 0..ncols-1 {
+            //println!("k:{idx_k}");
             for idx_i in (idx_k + 1)..nrows {
-                let lik = self.matrix.get_unchecked(idx_i, idx_k) / self.upper.get_unchecked(idx_k, idx_k);
-                self.lower.set(idx_i, idx_k, lik);
-                for idx in idx_k..ncols {
-                    let uii = self.upper.get_unchecked(idx_i, idx);
-                    let uki = self.upper.get_unchecked(idx_k, idx);
-                    self.upper.set(idx_i, idx, uii - uki * lik);
+                let lik = self.matrix.get_unchecked(idx_i, idx_k);
+                let ukk = self.upper.get_unchecked(idx_k, idx_k);
+                self.lower.set(idx_i, idx_k, lik / ukk);
+
+                // Update upper row
+                for idx_j in idx_i..nrows {
+                    let uii = self.upper.get_unchecked(idx_i, idx_j);
+                    let uki = self.upper.get_unchecked(idx_k, idx_j);
+                    self.upper.set(idx_i, idx_j, uii - uki * lik);
                 }
             }
 
-            // Update lower col
-            for idx_j in (idx_k + 1)..nrows {
-                let ukj = self.upper.get_unchecked(idx_k, idx_j);
-                for idx in idx_j..nrows {
-                    let ljj = self.lower.get_unchecked(idx, idx_j);
-                    let ljk = self.lower.get_unchecked(idx, idx_k);
-                    self.lower.set(idx, idx_j, ljj - ljk * ukj);
+            for idx_i in (idx_k+1)..nrows {
+                //println!("i:{idx_k}");
+                let ukj = self.upper.get_unchecked(idx_k, idx_i);
+                // Update lower col
+                for idx_j in (idx_i+1)..nrows {
+                    //println!("j:{idx_k}");
+                    
+                    let ljj = self.lower.get_unchecked(idx_j, idx_i);
+                    let ljk = self.lower.get_unchecked(idx_j, idx_k);
+                    //println!("row:{idx_j} col:{idx_i}");
+                    self.lower.set(idx_j, idx_i, ljj - ljk * ukj);
+                }
+            }
+        }*/
+
+        self.upper = self.matrix.clone();
+        self.lower = SparseMatrix::eye(T::one(), ncols);
+        for idx_k in 0..nrows {
+            let akk = self.upper.get(idx_k,idx_k).unwrap();
+            for idx_i in (idx_k+1)..nrows {
+                let aik = self.upper.get(idx_i,idx_k).unwrap();
+                let lik = aik/akk;
+                self.lower.set(idx_i, idx_k, lik);
+                for idx_j in (idx_k+1)..ncols {
+                    let akj = self.upper.get(idx_k,idx_j).unwrap();
+                    let aij = self.upper.get(idx_i,idx_j).unwrap();
+                    self.upper.set(idx_i, idx_j, aij-lik*akj );
                 }
             }
         }

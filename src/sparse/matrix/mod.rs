@@ -116,9 +116,12 @@ where
         let col_start = self.col_ptr[column] as usize;
         let col_end = self.col_ptr[column + 1] as usize;
         let row_slice = &self.row_idx[col_start..col_end];
-        let val_idx = row_slice.iter().find(|val| **val == row);
+        let val_idx = row_slice
+            .iter()
+            .find(|val| **val == row);
+
         match val_idx {
-            Some(idx) => Some(self.values[*idx]),
+            Some(idx) => Some(self.values[col_start+idx]),
             None => None,
         }
     }
@@ -128,11 +131,20 @@ where
         let col_start = self.col_ptr[column] as usize;
         let col_end = self.col_ptr[column + 1] as usize;
         let row_slice = &self.row_idx[col_start..col_end];
-        let val_idx = row_slice.iter().find(|val| **val == row);
+        let val_idx = row_slice
+            .iter()
+            .find(|val| **val == row);
         match val_idx {
-            Some(idx) => self.values[*idx],
+            Some(idx) => self.values[col_start+idx],
             None => panic!("Value not present in Matrix at {row} {column}"),
         }
+    }
+
+    /// Returns a slice of row
+    pub fn get_col_slice(&self, column: usize) -> (&[usize],&[T]) {
+        let start = self.col_ptr[column] as usize;
+        let end = self.col_ptr[column + 1] as usize;
+        (&self.row_idx[start..end],&self.values[start..end])
     }
 
     /// Sets the value at the specified row and column
@@ -199,6 +211,27 @@ where
     /// in a column-major order.
     pub fn iter(&self) -> SparseIter<T> {
         SparseIter::new(self)
+    }
+
+
+    /// Returns an iterator over the tuples (row_index, value) for a column
+    pub fn iter_col(&self, column: usize) -> ColIterator<T> {
+        ColIterator::new(self, column)
+    }
+
+    /// Returns an iterator over the tuples (row_index, value) for a column
+    pub fn iter_col_from(&self, column: usize, start: usize) -> ColIterator<T> {
+        todo!();
+    }
+
+    /// Returns an iterator over the elements of a row
+    pub fn iter_row(&self, row: usize) -> RowIterator<T> {
+        RowIterator::new(self, row)
+    }
+
+    /// Returns an iterator over the elements of a row
+    pub fn iter_row_from(&self, row: usize, start: usize) -> RowIterator<T> {
+        todo!();
     }
 
     /// Returns an iterator returning the pivot elements.
@@ -278,6 +311,21 @@ where
         }
     }
 
+    fn to_dense(&self) -> Vec<Vec<T>> {
+        let mut dense = vec![vec![T::default(); self.ncols]; self.nrows];
+        
+        for col in 0..self.ncols {
+            let start = self.col_ptr[col] as usize;
+            let end = self.col_ptr[col + 1] as usize;
+            for idx in start..end {
+                let row = self.row_idx[idx];
+                dense[row][col] = self.values[idx];
+            }
+        }
+        
+        dense
+    }
+
     /// Identity plus strictly lower triangular part of A
     pub fn lower_triangular(&self) -> SparseMatrix<T> {
         let mat = self
@@ -325,6 +373,27 @@ where
             panic!("Column out of bounds")
         }
         self.col_ptr[col + 1] - self.col_ptr[col]
+    }
+}
+
+impl<T> std::fmt::Display for SparseMatrix<T>
+where
+    T: Default 
+    + Copy
+    + std::fmt::Debug
+    + One
+    + PartialEq
+    + std::ops::Add<Output = T>
+    + std::ops::Sub<Output = T>
+    + std::ops::Mul<Output = T>
+    + std::ops::Div<Output = T>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let dense = self.to_dense();
+        for row in dense {
+            writeln!(f, "[{}]", row.iter().map(|v| format!("{v:#?}")).collect::<Vec<_>>().join(","))?;
+        }
+        Ok(())
     }
 }
 

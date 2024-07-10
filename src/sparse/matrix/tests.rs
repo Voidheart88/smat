@@ -56,15 +56,44 @@ fn test_eye_matrix() {
 }
 
 #[test]
-fn test_get_value() {
-    let col_idx = vec![0, 1, 2, 2];
-    let row_idx = vec![0, 1];
-    let values = vec![1.0, 2.0];
-    let matrix: SparseMatrix<f64> = SparseMatrix::new(3, 3, col_idx, row_idx, values);
+fn test_get_value1() {
+    let sparse: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ].into();
 
-    assert_eq!(matrix.get(0, 0), Some(1.0));
-    assert_eq!(matrix.get(1, 1), Some(2.0));
-    assert_eq!(matrix.get(2, 2), None);
+    assert_eq!(sparse.get(0, 0), Some(1.0));
+    assert_eq!(sparse.get(0, 1), Some(2.0));
+    assert_eq!(sparse.get(0, 2), Some(3.0));
+    assert_eq!(sparse.get(1, 0), Some(4.0));
+    assert_eq!(sparse.get(1, 1), Some(5.0));
+    assert_eq!(sparse.get(1, 2), Some(6.0));
+    assert_eq!(sparse.get(2, 0), Some(7.0));
+    assert_eq!(sparse.get(2, 1), Some(8.0));
+    assert_eq!(sparse.get(2, 2), Some(9.0));
+    assert_eq!(sparse.get(3, 1), None);
+}
+
+#[test]
+fn test_get_value2() {
+    let sparse: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 2.0],
+        vec![0.0, 0.0, 0.0],
+        vec![0.0, 0.0, 3.0],
+    ].into();
+
+    assert_eq!(sparse.get(0, 0), Some(1.0));
+    assert_eq!(sparse.get(0, 1), None);
+    assert_eq!(sparse.get(0, 2), Some(2.0));
+    assert_eq!(sparse.get(1, 0), None);
+    assert_eq!(sparse.get(1, 1), None);
+    assert_eq!(sparse.get(1, 2), None);
+    assert_eq!(sparse.get(2, 0), None);
+    assert_eq!(sparse.get(2, 1), None);
+    assert_eq!(sparse.get(2, 2), Some(3.0));
+
+    assert_eq!(sparse.get(3, 1), None); // Should be None since there is no val present
 }
 
 #[test]
@@ -77,6 +106,9 @@ fn test_get_value_unchecked() {
     .into();
 
     assert_eq!(sparse.get_unchecked(0, 0), 1.0);
+    assert_eq!(sparse.get_unchecked(1, 1), 2.0);
+    assert_eq!(sparse.get_unchecked(1, 2), 3.0);
+    assert_eq!(sparse.get_unchecked(2, 2), 4.0);
 }
 
 #[test]
@@ -498,6 +530,7 @@ fn test_from_iter_identity() {
     assert_eq!(matrix, result_matrix);
 }
 
+
 #[test]
 fn test_from_lower_triangular_iter_identity() {
     let matrix: SparseMatrix<u64> = vec![vec![1, 4, 7], vec![2, 5, 8], vec![3, 6, 9]].into();
@@ -575,22 +608,36 @@ fn test_set_function() {
 
 #[test]
 fn test_lower_triangular() {
-    let mat: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]].into();
+    let mat: SparseMatrix<i64> = vec![
+        vec![1, 2, 3], 
+        vec![4, 5, 6], 
+        vec![7, 8, 9]
+    ].into();
 
-    let expected: SparseMatrix<i64> = vec![vec![1, 0, 0], vec![4, 1, 0], vec![7, 8, 1]].into();
+    let expected: SparseMatrix<i64> = vec![
+        vec![1, 0, 0], 
+        vec![4, 1, 0], 
+        vec![7, 8, 1]
+    ].into();
 
     let result = mat.lower_triangular();
-
-    print!("{result:?}");
 
     assert_eq!(result, expected);
 }
 
 #[test]
 fn test_upper_triangular() {
-    let mat: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]].into();
+    let mat: SparseMatrix<i64> = vec![
+        vec![1, 2, 3], 
+        vec![4, 5, 6], 
+        vec![7, 8, 9]
+    ].into();
 
-    let expected: SparseMatrix<i64> = vec![vec![1, 2, 3], vec![0, 5, 6], vec![0, 0, 9]].into();
+    let expected: SparseMatrix<i64> = vec![
+        vec![1, 2, 3], 
+        vec![0, 5, 6], 
+        vec![0, 0, 9]
+    ].into();
 
     let result = mat.upper_triangular();
     assert_eq!(result, expected);
@@ -674,4 +721,147 @@ fn test_nz_rows3() {
     assert_eq!(mat.nz_rows(1).unwrap(), expected);
     let expected = 1;
     assert_eq!(mat.nz_rows(2).unwrap(), expected);
+}
+
+#[test]
+fn test_get_col_slice1() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0], 
+        vec![0.0, 5.0, 6.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let res = mat.get_col_slice(0);
+    let expected = [0usize];
+    assert_eq!(res.0,expected);
+    let expected = [1.0];
+    assert_eq!(res.1,expected);
+
+    let res = mat.get_col_slice(1);
+    let expected = [0,1];
+    assert_eq!(res.0,expected);
+    let expected = [2.0,5.0];
+    assert_eq!(res.1,expected);
+
+    let res = mat.get_col_slice(2);
+    let expected = [0,1,2];
+    assert_eq!(res.0,expected);
+    let expected = [3.0,6.0,9.0];
+    assert_eq!(res.1,expected);
+}
+
+#[test]
+fn test_get_col_slice2() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 3.0], 
+        vec![0.0, 0.0, 6.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let res = mat.get_col_slice(0);
+    let expected = [0usize];
+    assert_eq!(res.0,expected);
+    let expected = [1.0];
+    assert_eq!(res.1,expected);
+
+    let res = mat.get_col_slice(1);
+    let expected = [];
+    assert_eq!(res.0,expected);
+    let expected = [];
+    assert_eq!(res.1,expected);
+
+    let res = mat.get_col_slice(2);
+    let expected = [0,1,2];
+    assert_eq!(res.0,expected);
+    let expected = [3.0,6.0,9.0];
+    assert_eq!(res.1,expected);
+}
+
+#[test]
+fn test_iter_col1() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0], 
+        vec![0.0, 5.0, 6.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let col0: Vec<(usize, &f64)> = mat.iter_col(0).collect();
+    assert_eq!(col0, vec![(0, &1.0)]);
+
+    let col1: Vec<(usize, &f64)> = mat.iter_col(1).collect();
+    assert_eq!(col1, vec![(0, &2.0),(1, &5.0)]);
+
+    let col2: Vec<(usize, &f64)> = mat.iter_col(2).collect();
+    assert_eq!(col2, vec![(0, &3.0),(1, &6.0),(2, &9.0)]);
+}
+
+#[test]
+fn test_iter_col2() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 3.0], 
+        vec![0.0, 0.0, 0.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let col0: Vec<(usize, &f64)> = mat.iter_col(0).collect();
+    assert_eq!(col0, vec![(0, &1.0)]);
+
+    let col1: Vec<(usize, &f64)> = mat.iter_col(1).collect();
+    assert_eq!(col1, vec![]);
+
+    let col2: Vec<(usize, &f64)> = mat.iter_col(2).collect();
+    assert_eq!(col2, vec![(0, &3.0),(2, &9.0)]);
+}
+
+#[test]
+fn test_iter_row1() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0], 
+        vec![0.0, 5.0, 6.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let row0: Vec<(usize, &f64)> = mat.iter_row(0).collect();
+    assert_eq!(row0, vec![(0, &1.0),(1, &2.0),(2, &3.0)]);
+
+    let row1: Vec<(usize, &f64)> = mat.iter_row(1).collect();
+    assert_eq!(row1, vec![(1, &5.0),(2, &6.0)]);
+
+    let row2: Vec<(usize, &f64)> = mat.iter_row(2).collect();
+    assert_eq!(row2, vec![(2, &9.0)]);
+}
+
+#[test]
+fn test_iter_row2() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 3.0], 
+        vec![0.0, 0.0, 0.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let row0: Vec<(usize, &f64)> = mat.iter_row(0).collect();
+    assert_eq!(row0, vec![(0, &1.0),(2, &3.0)]);
+
+    let row1: Vec<(usize, &f64)> = mat.iter_row(1).collect();
+    assert_eq!(row1, vec![]); // Empty Row
+
+    let row2: Vec<(usize, &f64)> = mat.iter_row(2).collect();
+    assert_eq!(row2, vec![(2, &9.0)]);
+}
+
+#[test]
+fn test_to_dense() {
+    let mat:SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 3.0], 
+        vec![0.0, 0.0, 0.0], 
+        vec![0.0, 0.0, 9.0]
+    ].into();
+
+    let exp = vec![
+        vec![1.0, 0.0, 3.0], 
+        vec![0.0, 0.0, 0.0], 
+        vec![0.0, 0.0, 9.0]
+    ];
+
+    assert_eq!(mat.to_dense(),exp)
 }

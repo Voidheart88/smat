@@ -44,6 +44,91 @@ where
     }
 }
 
+/// Iterator for the elements of a row in the SparseMatrix
+pub struct RowIterator<'a, T> {
+    matrix: &'a SparseMatrix<T>,
+    row: usize,
+    current_col: usize,
+}
+
+impl<'a, T> RowIterator<'a, T> {
+    pub fn new(matrix: &'a SparseMatrix<T>,row: usize) -> Self {
+        RowIterator {
+            matrix,
+            row,
+            current_col: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for RowIterator<'a, T>
+where
+    T: Copy
+        + Default
+        + std::fmt::Debug
+        + PartialEq
+        + One
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>,
+{
+    type Item = (usize, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.current_col < self.matrix.ncols {
+            let col = self.current_col;
+            self.current_col += 1;
+            let (row_indices, values) = self.matrix.get_col_slice(col);
+            if let Some(pos) = row_indices.iter().position(|&r| r == self.row) {
+                return Some((col, &values[pos]));
+            }
+        }
+        None
+    }
+}
+
+/// Iterator for the elements of a Column in the SparseMatrix
+pub struct ColIterator<'a, T> {
+    matrix: &'a SparseMatrix<T>,
+    col: usize,
+    current_row: usize,
+}
+
+impl<'a, T> ColIterator<'a, T> {
+    pub fn new(matrix: &'a SparseMatrix<T>,col: usize) -> Self {
+        ColIterator {
+            matrix,
+            col,
+            current_row: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for ColIterator<'a, T>
+where
+    T: Copy
+        + Default
+        + std::fmt::Debug
+        + PartialEq
+        + One
+        + std::ops::Add<Output = T>
+        + std::ops::Sub<Output = T>
+        + std::ops::Mul<Output = T>
+        + std::ops::Div<Output = T>
+{
+    type Item = (usize, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (row_indices, values) = self.matrix.get_col_slice(self.col);
+        while let Some((row, value)) = row_indices.iter().copied().zip(values.iter()).skip_while(|&(r, _)| r < self.current_row).next() {
+            self.current_row = row + 1; // move to the next row index
+            return Some((row, value));
+        }
+        None
+    }
+}
+
 /// An Iterator over the values in the lower triangular part of a Sparse Matrix
 pub struct LowerTriangularSparseIter<'a, T> {
     matrix: &'a SparseMatrix<T>,

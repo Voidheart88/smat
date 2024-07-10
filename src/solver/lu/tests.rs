@@ -41,7 +41,12 @@ fn test_lu_decomposition_with_unity() {
 
     let mut solver = LUSolver::new(&matrix, &vector);
     solver.decompose();
+    println!("upper:\n{}",solver.upper);
+    println!("lower:\n{}",solver.lower);
+
     let solution = solver.lower*solver.upper;
+
+    println!("solution:\n{}",solution);
 
     assert_eq!(matrix, solution);
 }
