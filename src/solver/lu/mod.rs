@@ -42,13 +42,12 @@ where
 
     // Todo
     fn decompose(&mut self) {
-        self.upper = self.matrix.clone();
+        self.upper = self.matrix.upper_triangular();
         self.lower = self.matrix.lower_triangular();
         let ncols = self.matrix.ncols();
         let nrows = self.matrix.nrows();
 
-        /*for idx_k in 0..ncols-1 {
-            //println!("k:{idx_k}");
+        for idx_k in 0..ncols-1 {
             for idx_i in (idx_k + 1)..nrows {
                 let lik = self.matrix.get_unchecked(idx_i, idx_k);
                 let ukk = self.upper.get_unchecked(idx_k, idx_k);
@@ -63,32 +62,12 @@ where
             }
 
             for idx_i in (idx_k+1)..nrows {
-                //println!("i:{idx_k}");
                 let ukj = self.upper.get_unchecked(idx_k, idx_i);
                 // Update lower col
-                for idx_j in (idx_i+1)..nrows {
-                    //println!("j:{idx_k}");
-                    
+                for idx_j in (idx_i+1)..nrows {                    
                     let ljj = self.lower.get_unchecked(idx_j, idx_i);
                     let ljk = self.lower.get_unchecked(idx_j, idx_k);
-                    //println!("row:{idx_j} col:{idx_i}");
                     self.lower.set(idx_j, idx_i, ljj - ljk * ukj);
-                }
-            }
-        }*/
-
-        self.upper = self.matrix.clone();
-        self.lower = SparseMatrix::eye(T::one(), ncols);
-        for idx_k in 0..nrows {
-            let akk = self.upper.get(idx_k,idx_k).unwrap();
-            for idx_i in (idx_k+1)..nrows {
-                let aik = self.upper.get(idx_i,idx_k).unwrap();
-                let lik = aik/akk;
-                self.lower.set(idx_i, idx_k, lik);
-                for idx_j in (idx_k+1)..ncols {
-                    let akj = self.upper.get(idx_k,idx_j).unwrap();
-                    let aij = self.upper.get(idx_i,idx_j).unwrap();
-                    self.upper.set(idx_i, idx_j, aij-lik*akj );
                 }
             }
         }

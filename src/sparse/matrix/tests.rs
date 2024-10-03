@@ -107,7 +107,7 @@ fn test_get_value_unchecked() {
 
     assert_eq!(sparse.get_unchecked(0, 0), 1.0);
     assert_eq!(sparse.get_unchecked(1, 1), 2.0);
-    assert_eq!(sparse.get_unchecked(1, 2), 3.0);
+    assert_eq!(sparse.get_unchecked(2, 1), 3.0);
     assert_eq!(sparse.get_unchecked(2, 2), 4.0);
 }
 
@@ -122,6 +122,52 @@ fn test_get_value_unchecked2() {
     .into();
 
     sparse.get_unchecked(0, 1);
+}
+
+#[test]
+fn test_set_value1() {
+    let mut sparse: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 2.0],
+        vec![0.0, 0.0, 0.0],
+        vec![0.0, 0.0, 3.0],
+    ].into();
+
+    let exp: SparseMatrix<f64> = vec![
+        vec![1.0, 0.0, 2.0],
+        vec![0.0, 4.0, 0.0],
+        vec![0.0, 0.0, 3.0],
+    ].into();
+
+    sparse.set(1, 1, 4.0);
+
+    assert_eq!(sparse,exp);
+}
+
+#[test]
+fn test_set_value2() {
+    let mut sparse: SparseMatrix<f64> = vec![
+        vec![0.0, 0.0, 0.0],
+        vec![0.0, 0.0, 0.0],
+        vec![0.0, 0.0, 0.0],
+    ].into();
+
+    let exp: SparseMatrix<f64> = vec![
+        vec![1.0, 2.0, 3.0],
+        vec![4.0, 5.0, 6.0],
+        vec![7.0, 8.0, 9.0],
+    ].into();
+
+    sparse.set(0, 0, 1.0);
+    sparse.set(1, 2, 6.0);
+    sparse.set(0, 2, 3.0);
+    sparse.set(2, 1, 8.0);
+    sparse.set(2, 0, 7.0);
+    sparse.set(1, 0, 4.0);
+    sparse.set(0, 1, 2.0);
+    sparse.set(1, 1, 5.0);
+    sparse.set(2, 2, 9.0);
+
+    assert_eq!(sparse,exp);
 }
 
 #[test]

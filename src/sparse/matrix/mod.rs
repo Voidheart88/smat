@@ -118,7 +118,7 @@ where
         let row_slice = &self.row_idx[col_start..col_end];
         let val_idx = row_slice
             .iter()
-            .find(|val| **val == row);
+            .position(|val| *val == row);
 
         match val_idx {
             Some(idx) => Some(self.values[col_start+idx]),
@@ -133,7 +133,8 @@ where
         let row_slice = &self.row_idx[col_start..col_end];
         let val_idx = row_slice
             .iter()
-            .find(|val| **val == row);
+            .position(|val| *val == row);
+
         match val_idx {
             Some(idx) => self.values[col_start+idx],
             None => panic!("Value not present in Matrix at {row} {column}"),
@@ -147,13 +148,27 @@ where
         (&self.row_idx[start..end],&self.values[start..end])
     }
 
-    /// Sets the value at the specified row and column
+    /// Sets the value at the specified row and column 
     pub fn set(&mut self, row: usize, col: usize, value: T) {
+        // Check if the value is already present
         for idx in self.col_ptr[col]..self.col_ptr[col + 1] {
             if self.row_idx[idx as usize] == row {
                 self.values[idx as usize] = value;
                 return;
             }
+        }
+
+        // If the value is not present, we need to insert it
+        let mut insert_pos = self.col_ptr[col] as usize;
+        while insert_pos < self.col_ptr[col + 1] as usize && self.row_idx[insert_pos] < row {
+            insert_pos += 1;
+        }
+        self.row_idx.insert(insert_pos, row);
+        self.values.insert(insert_pos, value);
+
+        // Update col_ptr
+        for i in (col + 1)..=self.ncols {
+            self.col_ptr[i] += 1;
         }
     }
 
