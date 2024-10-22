@@ -383,11 +383,24 @@ where
     }
 
     /// Returns the number of non-zero elements in a given column
+    /// Panics if col > self.ncols
     pub fn nz_rows_unchecked(&self, col: usize) -> isize {
         if col >= self.ncols {
             panic!("Column out of bounds")
         }
         self.col_ptr[col + 1] - self.col_ptr[col]
+    }
+
+    /// x(P) = b, for dense vectors x and b; P=None denotes identity
+    /// inverse permutation of self.x
+    pub fn ipvec(&mut self, n: usize, p: &Option<Vec<isize>>, b: &[f64], x: &mut [f64]) {
+        for k in 0..n {
+            if p.is_some() {
+                x[p.as_ref().unwrap()[k] as usize] = b[k];
+            } else {
+                x[k] = b[k];
+            }
+        }
     }
 }
 
